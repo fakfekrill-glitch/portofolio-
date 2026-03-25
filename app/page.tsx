@@ -76,7 +76,7 @@ const experienceData = [
 // Pastikan nama file di bawah ini SAMA PERSIS dengan file foto yang kamu masukkan ke folder public/certificates
 const certificateImages = [
   "certificate1.png",
-  "certificate2.png,
+  "certificate2.png",
   "certificate.png"
 ];
 
