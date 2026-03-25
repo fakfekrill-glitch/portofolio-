@@ -38,7 +38,7 @@ const personalInfo = {
   lastName: "RAZIQ",
   fullName: "Dalu Raziq Hidayatullah",
   title: "Computer Engineering Enthusiast & Developer",
-  bio: "Menggabungkan rekayasa perangkat keras, eksplorasi sistem keamanan, dan pengembangan web modern menjadi solusi teknologi yang solid dan interaktif.",
+  bio: "Suka Rekayasa Perangkat Keras, Mengeksploit Celah Keamanan, Belajar IoT, Merakit Alat, Suka Makan Dan Tidur.",
   photoPath: "/images/profile.jpg", 
   school: "SMA Negeri 8 Surabaya",
   origin: "Surabaya, Indonesia",
