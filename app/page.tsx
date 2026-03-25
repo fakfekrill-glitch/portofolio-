@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, School, User, Mail, MessageSquare, ArrowRight, Camera, X, ZoomIn } from 'lucide-react';
+import { MapPin, School, User, Mail, MessageSquare, ArrowRight, Camera, X, ZoomIn, Award } from 'lucide-react';
 import Image from 'next/image';
 
 // --- CUSTOM BRAND ICONS (ANTI ERROR) ---
@@ -72,6 +72,14 @@ const experienceData = [
   }
 ];
 
+// --- NAMA FILE FOTO SERTIFIKAT KAMU ---
+// Pastikan nama file di bawah ini SAMA PERSIS dengan file foto yang kamu masukkan ke folder public/certificates
+const certificateImages = [
+  "certificate1.pg"
+  "certificate2.pn",
+  "certificate.png"
+];
+
 // --- ANIMATION VARIANTS ---
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -126,7 +134,7 @@ const SocialCard = ({ icon: Icon, label, value, href, isSuspended = false }: any
 
 export default function Home() {
   const [photos, setPhotos] = useState<string[]>([]);
-  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/gallery')
@@ -136,12 +144,12 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (selectedPhoto) {
+    if (selectedImage) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
     }
-  }, [selectedPhoto]);
+  }, [selectedImage]);
 
   return (
     <div className="min-h-screen pt-20 md:pt-24 pb-12 overflow-hidden">
@@ -264,6 +272,47 @@ export default function Home() {
         </div>
       </section>
 
+      {/* --- CERTIFICATES MURNI FOTO (TANPA TEKS) --- */}
+      <section id="certificates" className="max-w-7xl mx-auto px-6 py-16 md:py-24">
+        <motion.div 
+          initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp}
+          className="flex items-center gap-3 md:gap-4 mb-12 md:mb-16 border-b-2 pb-6 dark:border-neutral-800"
+        >
+          <Award className="text-blue-500 w-8 h-8 md:w-10 md:h-10" />
+          <h2 className="text-3xl md:text-6xl font-black tracking-tighter">
+            Prestasi & Sertifikat
+          </h2>
+        </motion.div>
+
+        <motion.div 
+          initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} 
+          variants={staggerContainer}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
+          {certificateImages.map((cert, index) => (
+            <motion.div 
+              key={index}
+              variants={fadeUp}
+              onClick={() => setSelectedImage(`/certificates/${cert}`)}
+              className="relative aspect-[4/3] rounded-2xl overflow-hidden group border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900 cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300"
+            >
+              <Image 
+                src={`/certificates/${cert}`}
+                alt={`Sertifikat ${index + 1}`}
+                fill
+                className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-in-out"
+                sizes="(max-w-768px) 100vw, 50vw, 33vw"
+              />
+              <div className="absolute inset-0 bg-neutral-950/0 group-hover:bg-neutral-950/40 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                 <div className="p-3 rounded-full bg-white/20 backdrop-blur-sm text-white scale-50 group-hover:scale-100 transition-transform duration-300">
+                   <ZoomIn className="w-6 h-6" />
+                 </div>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+      </section>
+
       {/* --- DYNAMIC GALLERY SECTION --- */}
       <section id="gallery" className="max-w-7xl mx-auto px-6 py-16 md:py-24">
         <motion.div 
@@ -290,7 +339,7 @@ export default function Home() {
               <motion.div 
                 key={index}
                 variants={fadeUp}
-                onClick={() => setSelectedPhoto(photo)}
+                onClick={() => setSelectedImage(`/projects/${photo}`)}
                 className="relative aspect-square rounded-xl md:rounded-2xl overflow-hidden group border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900 cursor-pointer shadow-sm hover:shadow-2xl transition-all duration-300"
               >
                 <Image 
@@ -372,7 +421,6 @@ export default function Home() {
               isSuspended={true}
             />
 
-            {/* KARTU STEAM BARU */}
             <SocialCard 
               icon={CustomSteam} 
               label="Steam Profile" 
@@ -392,18 +440,18 @@ export default function Home() {
 
       {/* --- OVERLAY PREMIUM FULL PREVIEW --- */}
       <AnimatePresence>
-        {selectedPhoto && (
+        {selectedImage && (
           <motion.div
             key="modal"
             variants={modalVariant}
             initial="hidden"
             animate="visible"
             exit="hidden"
-            onClick={() => setSelectedPhoto(null)}
+            onClick={() => setSelectedImage(null)}
             className="fixed inset-0 z-50 bg-neutral-950/95 p-2 md:p-4 flex items-center justify-center cursor-pointer backdrop-blur-sm"
           >
             <button
-              onClick={() => setSelectedPhoto(null)}
+              onClick={() => setSelectedImage(null)}
               className="absolute top-4 right-4 md:top-6 md:right-6 z-10 p-2 md:p-3 rounded-full bg-white/10 dark:bg-black/20 backdrop-blur-md text-white hover:bg-white/20 transition-colors"
             >
               <X className="w-5 h-5 md:w-6 md:h-6" />
@@ -415,14 +463,14 @@ export default function Home() {
               onClick={(e) => e.stopPropagation()}
             >
               <Image 
-                src={`/projects/${selectedPhoto}`}
+                src={selectedImage}
                 alt="Full preview tanpa terpotong"
                 fill
                 className="object-contain"
                 priority
               />
               <div className="absolute bottom-2 md:bottom-4 left-2 md:left-4 p-1.5 md:p-2 px-3 md:px-4 rounded-lg bg-black/50 text-white/70 text-[10px] md:text-xs font-mono backdrop-blur-sm truncate max-w-[80%]">
-                {selectedPhoto}
+                {selectedImage.split('/').pop()}
               </div>
             </motion.div>
           </motion.div>
