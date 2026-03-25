@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion'; // Tambahkan Variants di sini
 import { MapPin, School, User, Mail, MessageSquare, ArrowRight, Camera, X, ZoomIn, Award } from 'lucide-react';
 import Image from 'next/image';
 
-// --- CUSTOM BRAND ICONS (ANTI ERROR) ---
+// --- CUSTOM BRAND ICONS ---
 const CustomInstagram = ({ size = 24 }: { size?: number }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect>
@@ -32,7 +32,7 @@ const CustomSteam = ({ size = 24 }: { size?: number }) => (
   </svg>
 );
 
-// --- 1. DATA PERSONAL ---
+// --- DATA PERSONAL ---
 const personalInfo = {
   firstName: "DALU",
   lastName: "RAZIQ",
@@ -72,21 +72,24 @@ const experienceData = [
   }
 ];
 
-// --- NAMA FILE FOTO SERTIFIKAT KAMU ---
-// Pastikan nama file di bawah ini SAMA PERSIS dengan file foto yang kamu masukkan ke folder public/certificates
+// --- SERTIFIKAT (FOTO SAJA) ---
 const certificateImages = [
   "certificate1.png",
   "certificate2.png",
   "certificate.png"
 ];
 
-// --- ANIMATION VARIANTS ---
-const fadeUp = {
+// --- ANIMATION VARIANTS (FIXED TYPES) ---
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] } }
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] } 
+  }
 };
 
-const staggerContainer = {
+const staggerContainer: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -94,15 +97,19 @@ const staggerContainer = {
   }
 };
 
-const modalVariant = {
+const modalVariant: Variants = {
   hidden: { opacity: 0 },
   visible: { opacity: 1, transition: { duration: 0.3 } },
   exit: { opacity: 0, transition: { duration: 0.3, delay: 0.1 } }
 };
 
-const imageVariant = {
+const imageVariant: Variants = {
   hidden: { scale: 0.9, opacity: 0 },
-  visible: { scale: 1, opacity: 1, transition: { type: "spring", damping: 25, stiffness: 300 } },
+  visible: { 
+    scale: 1, 
+    opacity: 1, 
+    transition: { type: "spring", damping: 25, stiffness: 300 } 
+  },
   exit: { scale: 0.9, opacity: 0, transition: { duration: 0.3 } }
 };
 
@@ -205,7 +212,7 @@ export default function Home() {
             className="md:col-span-5 relative order-1 md:order-2 mb-8 md:mb-0"
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 1, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 1, delay: 0.5, ease: [0.22, 1, 0.36, 1] } as any}
           >
             <div className="hidden md:block absolute -top-6 -left-6 w-32 h-32 border-l-4 border-t-4 border-blue-500/30 rounded-tl-3xl z-0"></div>
             <div className="hidden md:block absolute -bottom-6 -right-6 w-32 h-32 border-r-4 border-b-4 border-cyan-500/30 rounded-br-3xl z-0"></div>
@@ -272,7 +279,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* --- CERTIFICATES MURNI FOTO (TANPA TEKS) --- */}
+      {/* --- CERTIFICATES --- */}
       <section id="certificates" className="max-w-7xl mx-auto px-6 py-16 md:py-24">
         <motion.div 
           initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp}
@@ -362,7 +369,7 @@ export default function Home() {
         )}
       </section>
 
-      {/* --- FOOTER (KONTAK & SOSIAL MEDIA) --- */}
+      {/* --- FOOTER --- */}
       <footer id="contact" className="max-w-7xl mx-auto px-6 pt-16 md:pt-20 pb-16">
         <motion.div 
           initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} 
