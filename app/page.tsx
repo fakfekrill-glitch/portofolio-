@@ -38,7 +38,7 @@ const personalInfo = {
   lastName: "RAZIQ",
   fullName: "Dalu Raziq Hidayatullah",
   title: "Computer Engineering Enthusiast & Developer",
-  bio: "Suka Rekayasa Perangkat Keras, Mengeksploit Celah Keamanan, Belajar IoT, Merakit Alat, Suka Makan Dan Tidur.",
+  bio: "Suka Rekayasa Perangkat Keras, Mengeksploit Celah Keamanan, Belajar IoT, Merakit Alat, Suka Makan, Tidur, Main Game PES BITBOX PATCH 2026, PUBG, VALORANT, POINT BLANK, CS2.",
   photoPath: "/images/profile.jpg", 
   school: "SMA Negeri 8 Surabaya",
   origin: "Surabaya, Indonesia",
