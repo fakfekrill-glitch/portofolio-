@@ -1,7 +1,5 @@
 'use client';
 
-// @ts-ignore: Mengabaikan error tipe TypeScript untuk Lenis
-import { ReactLenis } from '@studio-freight/react-lenis';
 import { ThemeProvider } from 'next-themes';
 import { useEffect, useState } from 'react';
 
@@ -12,14 +10,13 @@ export default function Provider({ children }: { children: React.ReactNode }) {
     setMounted(true);
   }, []);
 
-  if (!mounted) return null;
+  if (!mounted) {
+    return <>{children}</>;
+  }
 
   return (
-    // @ts-ignore: Bypass strict type checking di React 19 untuk ThemeProvider
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <ReactLenis root options={{ lerp: 0.05, smoothWheel: true }}>
-        {children}
-      </ReactLenis>
+    <ThemeProvider attribute="class" defaultTheme="dark">
+      {children}
     </ThemeProvider>
   );
 }
