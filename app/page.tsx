@@ -173,7 +173,6 @@ export default function Home() {
     }
   }, [selectedImage, showEasterEgg]);
 
-  // Auto-scroll ke bawah setiap ada chat baru di terminal
   useEffect(() => {
     terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [terminalHistory]);
@@ -202,7 +201,7 @@ export default function Home() {
     }, 3000);
   };
 
-  // --- LOGIKA COMMAND TERMINAL ---
+  // --- LOGIKA COMMAND TERMINAL (UPDATED) ---
   const handleTerminalCommand = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       const cmd = inputValue.trim().toLowerCase();
@@ -210,15 +209,14 @@ export default function Home() {
       
       if (!cmd) return;
 
-      // Masukkan input user ke layar
       setTerminalHistory(prev => [...prev, { type: 'input', text: `root@dalu-server:~$ ${cmd}` }]);
 
       switch (cmd) {
         case 'help':
           setTerminalHistory(prev => [...prev, 
             { type: 'output', text: 'Available commands:' },
-            { type: 'output', text: '  sysinfo    - Show your local hardware & OS specifications' },
-            { type: 'output', text: '  ip         - Fetch your real public IP Address' },
+            { type: 'output', text: '  sysinfo    - Extract local & network target specifications' },
+            { type: 'output', text: '  ip         - Fetch target public IP Address (Basic)' },
             { type: 'output', text: '  serverinfo - Display Vercel host details' },
             { type: 'output', text: '  clear      - Clear the terminal screen' },
             { type: 'output', text: '  exit       - Close terminal' }
@@ -226,17 +224,59 @@ export default function Home() {
           break;
         
         case 'sysinfo':
-          const cores = navigator.hardwareConcurrency || 'Unknown';
-          const ram = (navigator as any).deviceMemory ? `${(navigator as any).deviceMemory} GB` : 'Unknown';
-          const os = navigator.userAgent;
-          const res = `${window.screen.width}x${window.screen.height}`;
-          setTerminalHistory(prev => [...prev, 
-            { type: 'output', text: '[SYSTEM ANALYSIS COMPLETED]' },
-            { type: 'output', text: `CPU Cores   : ${cores}` },
-            { type: 'output', text: `Memory (RAM): ${ram}` },
-            { type: 'output', text: `Resolution  : ${res}` },
-            { type: 'output', text: `User-Agent  : ${os}` }
-          ]);
+          setTerminalHistory(prev => [...prev, { type: 'system', text: 'Initiating deep scan on target network and system...' }]);
+          try {
+            // Deteksi OS dan Versi
+            const ua = navigator.userAgent;
+            let os = "Unknown OS";
+            let osVersion = "Unknown";
+            
+            if (ua.includes("Win")) { 
+              os = "Windows"; 
+              osVersion = ua.match(/Windows NT ([\d.]+)/)?.[1] || "NT"; 
+            } else if (ua.includes("Android")) { 
+              os = "Android"; 
+              osVersion = ua.match(/Android ([\d.]+)/)?.[1] || ""; 
+            } else if (ua.includes("Mac")) { 
+              os = "MacOS"; 
+              osVersion = ua.match(/Mac OS X ([\d_]+)/)?.[1]?.replace(/_/g, '.') || ""; 
+            } else if (ua.includes("iPhone") || ua.includes("iPad")) { 
+              os = "iOS"; 
+              osVersion = ua.match(/OS ([\d_]+)/)?.[1]?.replace(/_/g, '.') || ""; 
+            } else if (ua.includes("Linux")) { 
+              os = "Linux"; 
+            }
+
+            // Deteksi Browser
+            let browser = "Unknown";
+            if (ua.includes("Chrome") && !ua.includes("Edg") && !ua.includes("OPR")) browser = "Chrome";
+            else if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
+            else if (ua.includes("Firefox")) browser = "Firefox";
+            else if (ua.includes("Edg")) browser = "Edge";
+            else if (ua.includes("OPR") || ua.includes("Opera")) browser = "Opera";
+            else if (ua.includes("SamsungBrowser")) browser = "Samsung Internet";
+
+            // Fetch Data Network dari API Publik
+            const res = await fetch('https://ipapi.co/json/');
+            const data = await res.json();
+            
+            setTerminalHistory(prev => [...prev, 
+              { type: 'output', text: '-----------------------------------------' },
+              { type: 'output', text: '[ TARGET ANALYSIS COMPLETED ]' },
+              { type: 'output', text: `User OS      : ${os}` },
+              { type: 'output', text: `OS Version   : ${osVersion}` },
+              { type: 'output', text: `Browser      : ${browser}` },
+              { type: 'output', text: `IP Address   : ${data.ip || 'Hidden'}` },
+              { type: 'output', text: `IP Type      : ${data.version || 'Unknown'}` },
+              { type: 'output', text: `Location     : ${data.city || 'Unknown'}, ${data.region || 'Unknown'}` },
+              { type: 'output', text: `Country Code : ${data.country_code || 'Unknown'}` },
+              { type: 'output', text: `Geolocation  : ${data.latitude || '0'}, ${data.longitude || '0'}` },
+              { type: 'output', text: `ISP / Org    : ${data.org || 'Unknown'}` },
+              { type: 'output', text: '-----------------------------------------' }
+            ]);
+          } catch (err) {
+            setTerminalHistory(prev => [...prev, { type: 'error', text: 'Target firewall detected. Failed to extract network data.' }]);
+          }
           break;
 
         case 'ip':
@@ -279,7 +319,6 @@ export default function Home() {
   };
 
   return (
-    // FIX PADDING: pt-28 md:pt-32 ditambahkan agar bagian atas tidak mepet / terpotong
     <div className="min-h-screen pt-28 md:pt-32 pb-32 overflow-hidden relative">
       
       {/* --- FLOATING NAVIGATION DOCK --- */}
@@ -677,7 +716,7 @@ export default function Home() {
                     ${item.type === 'output' ? 'text-green-300' : ''}
                     ${item.type === 'error' ? 'text-red-400' : ''}
                   `}>
-                    {item.text}
+                    <pre className="whitespace-pre-wrap font-inherit">{item.text}</pre>
                   </div>
                 ))}
                 
