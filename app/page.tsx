@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion'; 
-import { MapPin, School, User, Mail, MessageSquare, ArrowRight, Camera, X, ZoomIn, Award, Home as HomeIcon, Briefcase, FileBadge, Image as ImageIcon, Phone } from 'lucide-react';
+import { MapPin, School, User, Mail, MessageSquare, ArrowRight, Camera, X, ZoomIn, Award, Home as HomeIcon, Briefcase, FileBadge, Image as ImageIcon, Phone, Terminal } from 'lucide-react';
 import Image from 'next/image';
 
 // --- CUSTOM BRAND ICONS ---
@@ -72,14 +72,14 @@ const experienceData = [
   }
 ];
 
-// --- SERTIFIKAT (FOTO SAJA) ---
+// --- SERTIFIKAT ---
 const certificateImages = [
   "certificate1.png",
   "certificate2.png",
   "certificate.png"
 ];
 
-// --- ANIMATION VARIANTS (ON-SCROLL RE-TRIGGER) ---
+// --- ANIMATION VARIANTS ---
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 30 },
   visible: { 
@@ -142,6 +142,18 @@ const SocialCard = ({ icon: Icon, label, value, href, isSuspended = false }: any
 export default function Home() {
   const [photos, setPhotos] = useState<string[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  
+  // --- STATE EASTER EGG (INTERACTIVE TERMINAL) ---
+  const [clickCount, setClickCount] = useState(0);
+  const [showEasterEgg, setShowEasterEgg] = useState(false);
+  const [inputValue, setInputValue] = useState('');
+  const [terminalHistory, setTerminalHistory] = useState([
+    { type: 'system', text: 'ROOT_ACCESS_GRANTED. Vercel Cloud Server Connected.' },
+    { type: 'system', text: 'Type "help" to see available commands.' }
+  ]);
+  
+  const terminalInputRef = useRef<HTMLInputElement>(null);
+  const terminalEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch('/api/gallery')
@@ -151,14 +163,21 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (selectedImage) {
+    if (selectedImage || showEasterEgg) {
       document.body.style.overflow = 'hidden';
+      if (showEasterEgg) {
+        setTimeout(() => terminalInputRef.current?.focus(), 500);
+      }
     } else {
       document.body.style.overflow = 'unset';
     }
-  }, [selectedImage]);
+  }, [selectedImage, showEasterEgg]);
 
-  // --- FUNGSI SMOOTH SCROLL ---
+  // Auto-scroll ke bawah setiap ada chat baru di terminal
+  useEffect(() => {
+    terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [terminalHistory]);
+
   const handleScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
     e.preventDefault();
     const href = e.currentTarget.href;
@@ -169,8 +188,99 @@ export default function Home() {
     }
   };
 
+  const handleImageClick = () => {
+    const newCount = clickCount + 1;
+    setClickCount(newCount);
+    
+    if (newCount >= 5) {
+      setShowEasterEgg(true);
+      setClickCount(0);
+    }
+    
+    setTimeout(() => {
+      setClickCount(0);
+    }, 3000);
+  };
+
+  // --- LOGIKA COMMAND TERMINAL ---
+  const handleTerminalCommand = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      const cmd = inputValue.trim().toLowerCase();
+      setInputValue('');
+      
+      if (!cmd) return;
+
+      // Masukkan input user ke layar
+      setTerminalHistory(prev => [...prev, { type: 'input', text: `root@dalu-server:~$ ${cmd}` }]);
+
+      switch (cmd) {
+        case 'help':
+          setTerminalHistory(prev => [...prev, 
+            { type: 'output', text: 'Available commands:' },
+            { type: 'output', text: '  sysinfo    - Show your local hardware & OS specifications' },
+            { type: 'output', text: '  ip         - Fetch your real public IP Address' },
+            { type: 'output', text: '  serverinfo - Display Vercel host details' },
+            { type: 'output', text: '  clear      - Clear the terminal screen' },
+            { type: 'output', text: '  exit       - Close terminal' }
+          ]);
+          break;
+        
+        case 'sysinfo':
+          const cores = navigator.hardwareConcurrency || 'Unknown';
+          const ram = (navigator as any).deviceMemory ? `${(navigator as any).deviceMemory} GB` : 'Unknown';
+          const os = navigator.userAgent;
+          const res = `${window.screen.width}x${window.screen.height}`;
+          setTerminalHistory(prev => [...prev, 
+            { type: 'output', text: '[SYSTEM ANALYSIS COMPLETED]' },
+            { type: 'output', text: `CPU Cores   : ${cores}` },
+            { type: 'output', text: `Memory (RAM): ${ram}` },
+            { type: 'output', text: `Resolution  : ${res}` },
+            { type: 'output', text: `User-Agent  : ${os}` }
+          ]);
+          break;
+
+        case 'ip':
+          setTerminalHistory(prev => [...prev, { type: 'system', text: 'Bypassing proxy... Fetching public IP...' }]);
+          try {
+            const res = await fetch('https://api.ipify.org?format=json');
+            const data = await res.json();
+            setTerminalHistory(prev => [...prev, { type: 'output', text: `TARGET ACQUIRED: Public IP Address is ${data.ip}` }]);
+          } catch (err) {
+            setTerminalHistory(prev => [...prev, { type: 'error', text: 'Connection blocked. Failed to fetch IP.' }]);
+          }
+          break;
+
+        case 'serverinfo':
+          setTerminalHistory(prev => [...prev, 
+            { type: 'output', text: 'HOST       : Vercel Edge Network' },
+            { type: 'output', text: 'REGION     : Washington, D.C., USA (iad1)' },
+            { type: 'output', text: 'FRAMEWORK  : Next.js v16.2.1 (Turbopack)' },
+            { type: 'output', text: 'STATUS     : Online & Secured' }
+          ]);
+          break;
+
+        case 'clear':
+          setTerminalHistory([]);
+          break;
+
+        case 'exit':
+          setShowEasterEgg(false);
+          setTerminalHistory([
+            { type: 'system', text: 'ROOT_ACCESS_GRANTED. Vercel Cloud Server Connected.' },
+            { type: 'system', text: 'Type "help" to see available commands.' }
+          ]);
+          break;
+
+        default:
+          setTerminalHistory(prev => [...prev, { type: 'error', text: `Command not found: ${cmd}. Type "help" for a list of commands.` }]);
+          break;
+      }
+    }
+  };
+
   return (
-    <div className="min-h-screen pt-12 pb-32 overflow-hidden relative">
+    // FIX PADDING: pt-28 md:pt-32 ditambahkan agar bagian atas tidak mepet / terpotong
+    <div className="min-h-screen pt-28 md:pt-32 pb-32 overflow-hidden relative">
       
       {/* --- FLOATING NAVIGATION DOCK --- */}
       <motion.nav 
@@ -269,13 +379,17 @@ export default function Home() {
             <div className="hidden md:block absolute -top-6 -left-6 w-32 h-32 border-l-4 border-t-4 border-blue-500/30 rounded-tl-3xl z-0"></div>
             <div className="hidden md:block absolute -bottom-6 -right-6 w-32 h-32 border-r-4 border-b-4 border-cyan-500/30 rounded-br-3xl z-0"></div>
             
-            <div className="relative aspect-square md:aspect-auto md:h-[600px] rounded-[2rem] md:rounded-3xl overflow-hidden shadow-2xl border-4 border-white dark:border-neutral-900 z-10 group mx-auto max-w-[300px] md:max-w-none">
+            {/* --- PEMICU EASTER EGG (KLIK 5 KALI) --- */}
+            <div 
+              onClick={handleImageClick}
+              className="relative aspect-square md:aspect-auto md:h-[600px] rounded-[2rem] md:rounded-3xl overflow-hidden shadow-2xl border-4 border-white dark:border-neutral-900 z-10 group mx-auto max-w-[300px] md:max-w-none cursor-crosshair"
+            >
               <Image 
                 src={personalInfo.photoPath}
                 alt={`Foto Profil ${personalInfo.fullName}`}
                 fill
                 priority
-                className="object-cover object-center group-hover:scale-110 transition-transform duration-1000 ease-out"
+                className={`object-cover object-center group-hover:scale-110 transition-transform duration-1000 ease-out ${clickCount > 0 ? 'scale-105 opacity-90' : ''}`}
                 sizes="(max-w-768px) 100vw, 40vw"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/60 to-transparent opacity-100 md:opacity-60 group-hover:opacity-30 transition-opacity"></div>
@@ -485,7 +599,7 @@ export default function Home() {
         </motion.div>
       </footer>
 
-      {/* --- OVERLAY PREMIUM FULL PREVIEW --- */}
+      {/* --- OVERLAY MODAL FOTO --- */}
       <AnimatePresence>
         {selectedImage && (
           <motion.div
@@ -518,6 +632,71 @@ export default function Home() {
               />
               <div className="absolute bottom-2 md:bottom-4 left-2 md:left-4 p-1.5 md:p-2 px-3 md:px-4 rounded-lg bg-black/50 text-white/70 text-[10px] md:text-xs font-mono backdrop-blur-sm truncate max-w-[80%]">
                 {selectedImage.split('/').pop()}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* --- EASTER EGG OVERLAY (INTERACTIVE TERMINAL) --- */}
+      <AnimatePresence>
+        {showEasterEgg && (
+          <motion.div
+            key="easter-egg"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.05 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 backdrop-blur-md"
+            onClick={() => setShowEasterEgg(false)}
+          >
+            <motion.div 
+              initial={{ y: 20 }}
+              animate={{ y: 0 }}
+              className="bg-black border border-green-500/50 rounded-xl shadow-[0_0_30px_rgba(34,197,94,0.3)] w-full max-w-3xl h-[60vh] md:h-[70vh] flex flex-col overflow-hidden relative"
+              onClick={(e) => {
+                e.stopPropagation();
+                terminalInputRef.current?.focus();
+              }}
+            >
+              {/* Header Terminal */}
+              <div className="flex items-center gap-3 p-4 bg-green-950/20 border-b border-green-500/30 shrink-0">
+                <Terminal className="text-green-500 w-6 h-6 animate-pulse" />
+                <h3 className="text-green-500 font-mono text-lg font-bold tracking-widest">daluraziq@server:~</h3>
+                <button onClick={() => setShowEasterEgg(false)} className="ml-auto text-green-500/50 hover:text-green-500">
+                  <X size={20} />
+                </button>
+              </div>
+              
+              {/* Layar Output Terminal */}
+              <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-2 font-mono text-sm md:text-base scrollbar-thin scrollbar-thumb-green-500/20 scrollbar-track-transparent">
+                {terminalHistory.map((item, index) => (
+                  <div key={index} className={`
+                    ${item.type === 'system' ? 'text-green-400 opacity-80' : ''}
+                    ${item.type === 'input' ? 'text-white' : ''}
+                    ${item.type === 'output' ? 'text-green-300' : ''}
+                    ${item.type === 'error' ? 'text-red-400' : ''}
+                  `}>
+                    {item.text}
+                  </div>
+                ))}
+                
+                {/* Baris Input Interaktif */}
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-green-500 shrink-0">root@dalu-server:~$</span>
+                  <input 
+                    ref={terminalInputRef}
+                    type="text"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={handleTerminalCommand}
+                    className="flex-1 bg-transparent border-none outline-none text-white font-mono"
+                    spellCheck="false"
+                    autoComplete="off"
+                    autoFocus
+                  />
+                </div>
+                <div ref={terminalEndRef} />
               </div>
             </motion.div>
           </motion.div>
