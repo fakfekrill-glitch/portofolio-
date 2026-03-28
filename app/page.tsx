@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence, Variants } from 'framer-motion'; // Tambahkan Variants di sini
-import { MapPin, School, User, Mail, MessageSquare, ArrowRight, Camera, X, ZoomIn, Award } from 'lucide-react';
+import { motion, AnimatePresence, Variants } from 'framer-motion'; 
+import { MapPin, School, User, Mail, MessageSquare, ArrowRight, Camera, X, ZoomIn, Award, Home as HomeIcon, Briefcase, FileBadge, Image as ImageIcon, Phone } from 'lucide-react';
 import Image from 'next/image';
 
 // --- CUSTOM BRAND ICONS ---
@@ -79,7 +79,7 @@ const certificateImages = [
   "certificate.png"
 ];
 
-// --- ANIMATION VARIANTS (FIXED TYPES) ---
+// --- ANIMATION VARIANTS (ON-SCROLL RE-TRIGGER) ---
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 30 },
   visible: { 
@@ -158,9 +158,59 @@ export default function Home() {
     }
   }, [selectedImage]);
 
+  // --- FUNGSI SMOOTH SCROLL ---
+  const handleScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+    e.preventDefault();
+    const href = e.currentTarget.href;
+    const targetId = href.replace(/.*\#/, "");
+    const elem = document.getElementById(targetId);
+    if (elem) {
+      elem.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
-    <div className="min-h-screen pt-20 md:pt-24 pb-12 overflow-hidden">
+    <div className="min-h-screen pt-12 pb-32 overflow-hidden relative">
       
+      {/* --- FLOATING NAVIGATION DOCK --- */}
+      <motion.nav 
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.5, type: "spring", stiffness: 200, damping: 20 }}
+        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xl border border-neutral-200 dark:border-neutral-800 px-4 md:px-6 py-3 rounded-full flex gap-4 md:gap-8 shadow-2xl"
+      >
+        <a href="#about" onClick={handleScroll} className="flex flex-col items-center gap-1 text-neutral-500 hover:text-blue-500 transition-colors group">
+          <div className="p-2 rounded-full group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 transition-colors">
+            <HomeIcon size={20} />
+          </div>
+          <span className="text-[10px] font-medium hidden md:block">Tentang</span>
+        </a>
+        <a href="#experience" onClick={handleScroll} className="flex flex-col items-center gap-1 text-neutral-500 hover:text-blue-500 transition-colors group">
+          <div className="p-2 rounded-full group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 transition-colors">
+            <Briefcase size={20} />
+          </div>
+          <span className="text-[10px] font-medium hidden md:block">Keahlian</span>
+        </a>
+        <a href="#certificates" onClick={handleScroll} className="flex flex-col items-center gap-1 text-neutral-500 hover:text-blue-500 transition-colors group">
+          <div className="p-2 rounded-full group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 transition-colors">
+            <FileBadge size={20} />
+          </div>
+          <span className="text-[10px] font-medium hidden md:block">Sertifikat</span>
+        </a>
+        <a href="#gallery" onClick={handleScroll} className="flex flex-col items-center gap-1 text-neutral-500 hover:text-blue-500 transition-colors group">
+          <div className="p-2 rounded-full group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 transition-colors">
+            <ImageIcon size={20} />
+          </div>
+          <span className="text-[10px] font-medium hidden md:block">Galeri</span>
+        </a>
+        <a href="#contact" onClick={handleScroll} className="flex flex-col items-center gap-1 text-neutral-500 hover:text-blue-500 transition-colors group">
+          <div className="p-2 rounded-full group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 transition-colors">
+            <Phone size={20} />
+          </div>
+          <span className="text-[10px] font-medium hidden md:block">Kontak</span>
+        </a>
+      </motion.nav>
+
       {/* --- HERO SECTION --- */}
       <section id="about" className="max-w-7xl mx-auto px-6 min-h-[85vh] flex items-center mb-16 md:mb-0">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-16 items-center">
@@ -168,7 +218,8 @@ export default function Home() {
           <motion.div 
             className="md:col-span-7 space-y-6 md:space-y-8 order-2 md:order-1"
             initial="hidden"
-            animate="visible"
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.1 }}
             variants={staggerContainer}
           >
             <motion.h2 variants={fadeUp} className="text-xs md:text-base text-blue-500 font-semibold tracking-widest uppercase">
@@ -202,7 +253,7 @@ export default function Home() {
             </motion.div>
             
             <motion.div variants={fadeUp} className="pt-4 md:pt-6">
-              <a href="#experience" className="inline-block w-full sm:w-auto text-center px-10 py-4 bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 rounded-full font-bold hover:scale-105 transition-transform shadow-lg">
+              <a href="#experience" onClick={handleScroll} className="inline-block w-full sm:w-auto text-center px-10 py-4 bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 rounded-full font-bold hover:scale-105 transition-transform shadow-lg cursor-pointer">
                 Eksplorasi Karya 🛠️
               </a>
             </motion.div>
@@ -210,9 +261,10 @@ export default function Home() {
           
           <motion.div 
             className="md:col-span-5 relative order-1 md:order-2 mb-8 md:mb-0"
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 1, delay: 0.5, ease: [0.22, 1, 0.36, 1] } as any}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.1 }}
+            variants={fadeUp}
           >
             <div className="hidden md:block absolute -top-6 -left-6 w-32 h-32 border-l-4 border-t-4 border-blue-500/30 rounded-tl-3xl z-0"></div>
             <div className="hidden md:block absolute -bottom-6 -right-6 w-32 h-32 border-r-4 border-b-4 border-cyan-500/30 rounded-br-3xl z-0"></div>
@@ -253,17 +305,25 @@ export default function Home() {
       {/* --- EXPERIENCE SECTION --- */}
       <section id="experience" className="max-w-7xl mx-auto px-6 py-16 md:py-24">
         <motion.h2 
-          initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp}
+          initial="hidden" 
+          whileInView="visible" 
+          viewport={{ once: false, amount: 0.1 }}
+          variants={fadeUp}
           className="text-3xl md:text-6xl font-black mb-12 md:mb-20 border-b-2 pb-6 dark:border-neutral-800 tracking-tighter"
         >
           Eksplorasi & Keahlian ✨
         </motion.h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
+        <motion.div 
+          initial="hidden" 
+          whileInView="visible" 
+          viewport={{ once: false, amount: 0.1 }}
+          variants={staggerContainer}
+          className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10"
+        >
           {experienceData.map((exp, index) => (
             <motion.div 
               key={index}
-              initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }}
               variants={fadeUp}
               className="group p-6 md:p-10 rounded-3xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:border-blue-500 dark:hover:border-blue-500 transition-all duration-500 relative overflow-hidden shadow-sm hover:shadow-xl md:hover:-translate-y-1"
             >
@@ -276,13 +336,16 @@ export default function Home() {
               </p>
             </motion.div>
           ))}
-        </div>
+        </motion.div>
       </section>
 
       {/* --- CERTIFICATES --- */}
       <section id="certificates" className="max-w-7xl mx-auto px-6 py-16 md:py-24">
         <motion.div 
-          initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp}
+          initial="hidden" 
+          whileInView="visible" 
+          viewport={{ once: false, amount: 0.1 }}
+          variants={fadeUp}
           className="flex items-center gap-3 md:gap-4 mb-12 md:mb-16 border-b-2 pb-6 dark:border-neutral-800"
         >
           <Award className="text-blue-500 w-8 h-8 md:w-10 md:h-10" />
@@ -292,7 +355,9 @@ export default function Home() {
         </motion.div>
 
         <motion.div 
-          initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} 
+          initial="hidden" 
+          whileInView="visible" 
+          viewport={{ once: false, amount: 0.1 }}
           variants={staggerContainer}
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
         >
@@ -323,7 +388,10 @@ export default function Home() {
       {/* --- DYNAMIC GALLERY SECTION --- */}
       <section id="gallery" className="max-w-7xl mx-auto px-6 py-16 md:py-24">
         <motion.div 
-          initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp}
+          initial="hidden" 
+          whileInView="visible" 
+          viewport={{ once: false, amount: 0.1 }}
+          variants={fadeUp}
           className="flex items-center gap-3 md:gap-4 mb-10 md:mb-16 border-b-2 pb-6 dark:border-neutral-800"
         >
           <Camera className="text-blue-500 w-8 h-8 md:w-10 md:h-10" />
@@ -333,12 +401,20 @@ export default function Home() {
         </motion.div>
 
         {photos.length === 0 ? (
-          <p className="text-neutral-500 text-center py-10 bg-neutral-100 dark:bg-neutral-900 rounded-3xl border border-dashed border-neutral-300 dark:border-neutral-800 text-sm md:text-base">
+          <motion.p 
+            initial="hidden" 
+            whileInView="visible" 
+            viewport={{ once: false, amount: 0.1 }}
+            variants={fadeUp}
+            className="text-neutral-500 text-center py-10 bg-neutral-100 dark:bg-neutral-900 rounded-3xl border border-dashed border-neutral-300 dark:border-neutral-800 text-sm md:text-base"
+          >
             Belum ada foto. Masukkan foto ke folder <code className="bg-neutral-200 dark:bg-neutral-800 px-2 py-1 rounded">public/projects</code>.
-          </p>
+          </motion.p>
         ) : (
           <motion.div 
-            initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} 
+            initial="hidden" 
+            whileInView="visible" 
+            viewport={{ once: false, amount: 0.1 }}
             variants={staggerContainer}
             className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4"
           >
@@ -372,7 +448,9 @@ export default function Home() {
       {/* --- FOOTER --- */}
       <footer id="contact" className="max-w-7xl mx-auto px-6 pt-16 md:pt-20 pb-16">
         <motion.div 
-          initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} 
+          initial="hidden" 
+          whileInView="visible" 
+          viewport={{ once: false, amount: 0.1 }}
           variants={staggerContainer}
           className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-16 items-center"
         >
@@ -384,61 +462,23 @@ export default function Home() {
           </motion.div>
 
           <motion.div variants={staggerContainer} className="md:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
-            
-            <SocialCard 
-              icon={Mail} 
-              label="Kirim Email" 
-              value={personalInfo.email} 
-              href={`mailto:${personalInfo.email}`} 
-            />
-
-            <SocialCard 
-              icon={MessageSquare} 
-              label="Discord Username" 
-              value={personalInfo.discord} 
-              href="https://discord.com/" 
-            />
-
-            <SocialCard 
-              icon={CustomInstagram} 
-              label="Instagram" 
-              value={`@${personalInfo.instagram}`} 
-              href={`https://instagram.com/${personalInfo.instagram}`} 
-            />
-
-            <SocialCard 
-              icon={CustomFacebook} 
-              label="Facebook" 
-              value={personalInfo.facebook} 
-              href={personalInfo.facebookLink} 
-            />
-
-            <SocialCard 
-              icon={CustomGithub} 
-              label="GitHub" 
-              value={`@${personalInfo.githubMain}`} 
-              href={`https://github.com/${personalInfo.githubMain}`} 
-            />
-
-            <SocialCard 
-              icon={CustomGithub} 
-              label="GitHub (Suspended)" 
-              value={`@${personalInfo.githubSuspended}`} 
-              href={`https://github.com/${personalInfo.githubSuspended}`} 
-              isSuspended={true}
-            />
-
-            <SocialCard 
-              icon={CustomSteam} 
-              label="Steam Profile" 
-              value="Sagiri" 
-              href={personalInfo.steamLink} 
-            />
-
+            <SocialCard icon={Mail} label="Kirim Email" value={personalInfo.email} href={`mailto:${personalInfo.email}`} />
+            <SocialCard icon={MessageSquare} label="Discord Username" value={personalInfo.discord} href="https://discord.com/" />
+            <SocialCard icon={CustomInstagram} label="Instagram" value={`@${personalInfo.instagram}`} href={`https://instagram.com/${personalInfo.instagram}`} />
+            <SocialCard icon={CustomFacebook} label="Facebook" value={personalInfo.facebook} href={personalInfo.facebookLink} />
+            <SocialCard icon={CustomGithub} label="GitHub" value={`@${personalInfo.githubMain}`} href={`https://github.com/${personalInfo.githubMain}`} />
+            <SocialCard icon={CustomGithub} label="GitHub (Suspended)" value={`@${personalInfo.githubSuspended}`} href={`https://github.com/${personalInfo.githubSuspended}`} isSuspended={true} />
+            <SocialCard icon={CustomSteam} label="Steam Profile" value="Sagiri" href={personalInfo.steamLink} />
           </motion.div>
         </motion.div>
 
-        <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center pt-16 md:pt-24 border-t dark:border-neutral-800 mt-12 md:mt-16">
+        <motion.div 
+          initial="hidden" 
+          whileInView="visible" 
+          viewport={{ once: false }}
+          variants={fadeUp}
+          className="text-center pt-16 md:pt-24 border-t dark:border-neutral-800 mt-12 md:mt-16"
+        >
           <p className="text-xs md:text-sm text-neutral-500">
             © {new Date().getFullYear()} {personalInfo.fullName}. All rights reserved. Made with ❤️ in Surabaya.
           </p>
