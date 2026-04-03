@@ -408,7 +408,7 @@ export default function Home() {
             variants={staggerContainer}
           >
             <motion.h2 variants={fadeUp} className="text-[10px] sm:text-xs lg:text-base text-blue-500 font-semibold tracking-widest uppercase">
-              🚀 {personalInfo.title}
+               {personalInfo.title}
             </motion.h2>
             
             <motion.h1 variants={fadeUp} className="text-3xl sm:text-5xl lg:text-7xl xl:text-8xl font-black tracking-tighter leading-[1.1] relative">
