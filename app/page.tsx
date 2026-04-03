@@ -40,10 +40,10 @@ const personalInfo = {
 };
 
 const techStackData = [
-  { category: "Web Development", icon: Code, skills: ["Next.js", "React", "Tailwind CSS", "TypeScript", "Node.js"] },
+  { category: "Web Development", icon: Code, skills: ["Next.js", "React", "Tailwind CSS", "TypeScript", "Node.js", "C++", "Python"] },
   { category: "Hardware & IoT", icon: Cpu, skills: ["ESP8266 / NodeMCU", "Arduino", "C++", "Sensor Integration", "Discord Webhooks"] },
-  { category: "Security & Modding", icon: ShieldAlert, skills: ["Kali Linux", "Magisk / KernelSU", "Custom ROMs", "Penetration Tools", "Python"] },
-  { category: "Tools & Software", icon: Wrench, skills: ["Git & GitHub", "VS Code", "Vercel", "Linux Terminal", "Juken 5++"] }
+  { category: "Security & Modding", icon: ShieldAlert, skills: ["Magisk / KernelSU", "Custom ROMs", "Penetration Tools"] },
+  { category: "Tools & Software", icon: Wrench, skills: ["Git & GitHub", "VS Code", "Vercel", "Android Studio"] }
 ];
 
 const experienceData = [
@@ -55,61 +55,93 @@ const experienceData = [
 
 const certificateImages = ["certificate1.png", "certificate2.png", "certificate.png"];
 
-// --- ANIMATION VARIANTS ---
 const fadeUp: Variants = { hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] } } };
 const staggerContainer: Variants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const modalVariant: Variants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { duration: 0.3 } }, exit: { opacity: 0, transition: { duration: 0.3, delay: 0.1 } } };
 const imageVariant: Variants = { hidden: { scale: 0.9, opacity: 0 }, visible: { scale: 1, opacity: 1, transition: { type: "spring", damping: 25, stiffness: 300 } }, exit: { scale: 0.9, opacity: 0, transition: { duration: 0.3 } } };
 
-// --- DISCORD PROFILE CARD KOMPONEN ---
+// --- DISCORD PROFILE CARD (INSTANT WEBSOCKET REAL-TIME) ---
 const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
   const [data, setData] = useState<any>(null);
   const [activity, setActivity] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchDiscordStatus = async () => {
-      try {
-        const res = await fetch(`https://api.lanyard.rest/v1/users/${discordId}`);
-        const json = await res.json();
-        
-        if (json.success) {
-          setData(json.data);
-          
-          if (json.data.activities && json.data.activities.length > 0) {
-            const activities = json.data.activities;
-            const listening = activities.find((a: any) => a.type === 2 || a.name.includes("Music") || a.name.includes("Spotify"));
-            const playing = activities.find((a: any) => a.type === 0);
-            const customStatus = activities.find((a: any) => a.type === 4);
+    let ws: WebSocket;
+    let heartbeatInterval: NodeJS.Timeout;
 
-            if (listening) {
-              const songName = listening.details || listening.name;
-              const artist = listening.state ? ` - ${listening.state}` : '';
-              setActivity(`🎵 Listening: ${songName}${artist}`);
-            } else if (playing) {
-              setActivity(`🎮 Playing ${playing.name}`);
-            } else if (customStatus && customStatus.state) {
-              setActivity(`💬 ${customStatus.state}`);
-            } else {
-              setActivity(`✨ Active: ${activities[0].name}`);
+    const connectWebSocket = () => {
+      // Connect pakai WebSocket agar instan tanpa loading
+      ws = new WebSocket('wss://api.lanyard.rest/socket');
+
+      ws.onopen = () => {
+        // Minta langganan data ke server
+        ws.send(JSON.stringify({ op: 2, d: { subscribe_to_id: discordId } }));
+      };
+
+      ws.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        
+        if (msg.op === 1) { // Detak jantung koneksi (Heartbeat)
+          heartbeatInterval = setInterval(() => {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ op: 3 }));
             }
-          } else {
-            setActivity(null);
+          }, msg.d.heartbeat_interval);
+        } 
+        else if (msg.op === 0) { // Kalau ada UPDATE / GANTI LAGU dari Discord
+          if (msg.t === 'INIT_STATE' || msg.t === 'PRESENCE_UPDATE') {
+            const userData = msg.d[discordId] || msg.d;
+            setData(userData);
+            
+            if (userData.activities && userData.activities.length > 0) {
+              const acts = userData.activities;
+              
+              // Logika deteksi pintar
+              const watching = acts.find((a: any) => a.type === 3 || a.name.toLowerCase().includes("youtube"));
+              const listening = acts.find((a: any) => a.type === 2 || a.name.includes("Music") || a.name.includes("Spotify"));
+              const playing = acts.find((a: any) => a.type === 0);
+              const customStatus = acts.find((a: any) => a.type === 4);
+
+              if (watching) {
+                const title = watching.details || watching.name;
+                const state = watching.state ? ` - ${watching.state}` : '';
+                setActivity(`▶️ Watching: ${title}${state}`);
+              } else if (listening) {
+                const song = listening.details || listening.name;
+                const artist = listening.state ? ` - ${listening.state}` : '';
+                setActivity(`🎵 Listening: ${song}${artist}`);
+              } else if (playing) {
+                const details = playing.details ? ` - ${playing.details}` : '';
+                setActivity(`🎮 Playing: ${playing.name}${details}`);
+              } else if (customStatus && customStatus.state) {
+                setActivity(`💬 ${customStatus.state}`);
+              } else {
+                setActivity(`✨ Active: ${acts[0].name}`);
+              }
+            } else {
+              setActivity(null); // Kalau kosong
+            }
           }
         }
-      } catch (e) {
-        console.error("Gagal ambil status Discord");
-      }
+      };
+
+      ws.onclose = () => {
+        clearInterval(heartbeatInterval);
+        setTimeout(connectWebSocket, 3000); // Reconnect kalau terputus
+      };
     };
 
-    fetchDiscordStatus();
-    const interval = setInterval(fetchDiscordStatus, 15000);
-    return () => clearInterval(interval);
+    connectWebSocket();
+
+    return () => {
+      if (ws) ws.close();
+      clearInterval(heartbeatInterval);
+    };
   }, [discordId]);
 
   if (!data) return null;
 
   const { discord_user, discord_status } = data;
-  
   const avatarUrl = discord_user.avatar 
     ? `https://cdn.discordapp.com/avatars/${discord_user.id}/${discord_user.avatar}.webp?size=128`
     : `https://cdn.discordapp.com/embed/avatars/0.png`;
@@ -124,10 +156,7 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
   const currentStatus = statusConfig[discord_status as keyof typeof statusConfig] || statusConfig.offline;
 
   return (
-    <motion.div 
-      variants={fadeUp}
-      className="col-span-1 sm:col-span-2 group relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#5865F2]/10 to-transparent border border-[#5865F2]/20 hover:border-[#5865F2]/50 transition-all duration-500 p-5 sm:p-6 shadow-sm hover:shadow-xl"
-    >
+    <motion.div variants={fadeUp} className="col-span-1 sm:col-span-2 group relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#5865F2]/10 to-transparent border border-[#5865F2]/20 hover:border-[#5865F2]/50 transition-all duration-500 p-5 sm:p-6 shadow-sm hover:shadow-xl">
       <div className="absolute -right-10 -top-10 w-40 h-40 bg-[#5865F2]/10 rounded-full blur-3xl group-hover:bg-[#5865F2]/20 transition-all duration-500"></div>
       
       <div className="flex items-center gap-4 sm:gap-6 relative z-10">
@@ -147,10 +176,7 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
               {currentStatus.text}
             </span>
           </div>
-          
-          <p className="text-xs sm:text-sm text-neutral-500 font-medium mb-2 truncate">
-            @{discord_user.username}
-          </p>
+          <p className="text-xs sm:text-sm text-neutral-500 font-medium mb-2 truncate">@{discord_user.username}</p>
 
           {activity ? (
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#5865F2]/10 border border-[#5865F2]/20 text-[#5865F2] text-xs sm:text-sm font-semibold max-w-full">
