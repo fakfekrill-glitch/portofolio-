@@ -40,10 +40,10 @@ const personalInfo = {
 };
 
 const techStackData = [
-  { category: "Web Development", icon: Code, skills: ["Next.js", "React", "Tailwind CSS", "TypeScript", "Node.js", "PHP", "C++"] },
+  { category: "Web Development", icon: Code, skills: ["Next.js", "React", "Tailwind CSS", "TypeScript", "Node.js"] },
   { category: "Hardware & IoT", icon: Cpu, skills: ["ESP8266 / NodeMCU", "Arduino", "C++", "Sensor Integration", "Discord Webhooks"] },
-  { category: "Security & Modding", icon: ShieldAlert, skills: ["Magisk / KernelSU", "Custom ROMs", "Penetration Tools"] },
-  { category: "Tools & Software", icon: Wrench, skills: ["Git & GitHub", "VS Code", "Vercel", "Linux Terminal"] }
+  { category: "Security & Modding", icon: ShieldAlert, skills: ["Kali Linux", "Magisk / KernelSU", "Custom ROMs", "Penetration Tools", "Python"] },
+  { category: "Tools & Software", icon: Wrench, skills: ["Git & GitHub", "VS Code", "Vercel", "Linux Terminal", "Juken 5++"] }
 ];
 
 const experienceData = [
@@ -61,32 +61,36 @@ const staggerContainer: Variants = { hidden: { opacity: 0 }, visible: { opacity:
 const modalVariant: Variants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { duration: 0.3 } }, exit: { opacity: 0, transition: { duration: 0.3, delay: 0.1 } } };
 const imageVariant: Variants = { hidden: { scale: 0.9, opacity: 0 }, visible: { scale: 1, opacity: 1, transition: { type: "spring", damping: 25, stiffness: 300 } }, exit: { scale: 0.9, opacity: 0, transition: { duration: 0.3 } } };
 
-// --- DISCORD LIVE CARD COMPONENT ---
-const DiscordLiveCard = ({ username, href }: { username: string, href: string }) => {
-  // ⚠️ GANTI ANGKA DI BAWAH INI DENGAN DISCORD ID ASLI KAMU ⚠️
-  const DISCORD_ID = "582206666431266816"; 
-  
-  const [status, setStatus] = useState<'online'|'idle'|'dnd'|'offline'>('offline');
+// --- DISCORD PROFILE CARD KOMPONEN ---
+const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
+  const [data, setData] = useState<any>(null);
   const [activity, setActivity] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDiscordStatus = async () => {
       try {
-        const res = await fetch(`https://api.lanyard.rest/v1/users/582206666431266816`);
+        const res = await fetch(`https://api.lanyard.rest/v1/users/${discordId}`);
         const json = await res.json();
         
         if (json.success) {
-          const data = json.data;
-          setStatus(data.discord_status);
+          setData(json.data);
           
-          if (data.activities && data.activities.length > 0) {
-            const playing = data.activities.find((a: any) => a.type === 0);
-            if (playing) {
+          if (json.data.activities && json.data.activities.length > 0) {
+            const activities = json.data.activities;
+            const listening = activities.find((a: any) => a.type === 2 || a.name.includes("Music") || a.name.includes("Spotify"));
+            const playing = activities.find((a: any) => a.type === 0);
+            const customStatus = activities.find((a: any) => a.type === 4);
+
+            if (listening) {
+              const songName = listening.details || listening.name;
+              const artist = listening.state ? ` - ${listening.state}` : '';
+              setActivity(`🎵 Listening: ${songName}${artist}`);
+            } else if (playing) {
               setActivity(`🎮 Playing ${playing.name}`);
-            } else if (data.listening_to_spotify) {
-              setActivity(`🎵 Listening to Spotify`);
+            } else if (customStatus && customStatus.state) {
+              setActivity(`💬 ${customStatus.state}`);
             } else {
-              setActivity(null);
+              setActivity(`✨ Active: ${activities[0].name}`);
             }
           } else {
             setActivity(null);
@@ -100,37 +104,68 @@ const DiscordLiveCard = ({ username, href }: { username: string, href: string })
     fetchDiscordStatus();
     const interval = setInterval(fetchDiscordStatus, 15000);
     return () => clearInterval(interval);
-  }, []);
+  }, [discordId]);
 
-  const statusColors = {
-    online: 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)]',
-    idle: 'bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.6)]',
-    dnd: 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.6)]',
-    offline: 'bg-neutral-400'
+  if (!data) return null;
+
+  const { discord_user, discord_status } = data;
+  
+  const avatarUrl = discord_user.avatar 
+    ? `https://cdn.discordapp.com/avatars/${discord_user.id}/${discord_user.avatar}.webp?size=128`
+    : `https://cdn.discordapp.com/embed/avatars/0.png`;
+
+  const statusConfig = {
+    online: { color: 'bg-green-500', shadow: 'shadow-[0_0_10px_rgba(34,197,94,0.8)]', text: 'Online' },
+    idle: { color: 'bg-yellow-500', shadow: 'shadow-[0_0_10px_rgba(234,179,8,0.8)]', text: 'Idle' },
+    dnd: { color: 'bg-red-500', shadow: 'shadow-[0_0_10px_rgba(239,68,68,0.8)]', text: 'Do Not Disturb' },
+    offline: { color: 'bg-neutral-500', shadow: '', text: 'Offline' }
   };
+  
+  const currentStatus = statusConfig[discord_status as keyof typeof statusConfig] || statusConfig.offline;
 
   return (
-    <motion.a 
-      href={href} target="_blank" rel="noopener noreferrer" variants={fadeUp}
-      className="group flex items-center gap-3 sm:gap-4 p-4 md:p-5 rounded-2xl border transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-1 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 hover:border-[#5865F2] dark:hover:border-[#5865F2]"
+    <motion.div 
+      variants={fadeUp}
+      className="col-span-1 sm:col-span-2 group relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#5865F2]/10 to-transparent border border-[#5865F2]/20 hover:border-[#5865F2]/50 transition-all duration-500 p-5 sm:p-6 shadow-sm hover:shadow-xl"
     >
-      <div className="relative p-2.5 sm:p-3 rounded-xl shrink-0 bg-[#5865F2]/10 text-[#5865F2]">
-        <MessageSquare size={20} className="sm:w-6 sm:h-6" />
-        <div className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 border-2 border-white dark:border-neutral-900 rounded-full ${statusColors[status]}`}></div>
-      </div>
-      <div className="overflow-hidden flex-1">
-        <p className="text-[10px] md:text-xs text-neutral-500 uppercase tracking-wider truncate">Discord Status</p>
-        <p className="text-sm sm:text-base md:text-lg font-semibold tracking-tight transition-colors truncate text-neutral-900 dark:text-white group-hover:text-[#5865F2]">
-          {username}
-        </p>
-        {activity && (
-          <p className="text-[10px] sm:text-xs text-[#5865F2] mt-0.5 truncate font-medium animate-pulse">
-            {activity}
+      <div className="absolute -right-10 -top-10 w-40 h-40 bg-[#5865F2]/10 rounded-full blur-3xl group-hover:bg-[#5865F2]/20 transition-all duration-500"></div>
+      
+      <div className="flex items-center gap-4 sm:gap-6 relative z-10">
+        <div className="relative shrink-0">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-[#5865F2]/30 group-hover:border-[#5865F2] transition-colors">
+            <img src={avatarUrl} alt="Discord Avatar" className="w-full h-full object-cover" />
+          </div>
+          <div className={`absolute bottom-0 right-0 w-5 h-5 border-4 border-white dark:border-neutral-950 rounded-full ${currentStatus.color} ${currentStatus.shadow}`}></div>
+        </div>
+
+        <div className="flex-1 overflow-hidden">
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="font-black text-lg sm:text-2xl tracking-tight truncate text-neutral-900 dark:text-white">
+              {discord_user.display_name || discord_user.username}
+            </h3>
+            <span className={`px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-white ${currentStatus.color}`}>
+              {currentStatus.text}
+            </span>
+          </div>
+          
+          <p className="text-xs sm:text-sm text-neutral-500 font-medium mb-2 truncate">
+            @{discord_user.username}
           </p>
-        )}
+
+          {activity ? (
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#5865F2]/10 border border-[#5865F2]/20 text-[#5865F2] text-xs sm:text-sm font-semibold max-w-full">
+              <span className="truncate">{activity}</span>
+              <span className="relative flex h-2 w-2 shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#5865F2] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#5865F2]"></span>
+              </span>
+            </div>
+          ) : (
+            <p className="text-xs text-neutral-400 italic truncate">Sedang tidak memutar game/lagu</p>
+          )}
+        </div>
       </div>
-      <ArrowRight size={16} className="ml-1 shrink-0 opacity-0 group-hover:opacity-100 transition-all transform group-hover:translate-x-1 hidden sm:block text-[#5865F2]" />
-    </motion.a>
+    </motion.div>
   );
 };
 
@@ -512,18 +547,17 @@ export default function Home() {
         )}
       </section>
 
-      {/* --- FOOTER --- */}
+      {/* --- FOOTER (CONTACT & SOCIAL MEDIA) --- */}
       <footer id="contact" className="max-w-7xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 md:pt-20 pb-16 sm:pb-24 lg:pb-16 border-t dark:border-neutral-800">
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.1 }} variants={staggerContainer} className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 lg:gap-16 items-center">
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.1 }} variants={staggerContainer} className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 lg:gap-16 items-start">
           <motion.div variants={fadeUp} className="lg:col-span-5 space-y-3 sm:space-y-4 md:space-y-6 text-center lg:text-left">
             <h2 className="text-3xl sm:text-5xl md:text-7xl font-black tracking-tighter leading-none">Found <br className="hidden lg:block"/> Me On</h2>
             <p className="text-sm sm:text-base md:text-xl text-neutral-600 dark:text-neutral-400 max-w-xl mx-auto lg:mx-0">Silakan Hubungi Saya Jika Bertanya Sesuatu.</p>
           </motion.div>
 
           <motion.div variants={staggerContainer} className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+            <DiscordProfileCard discordId="582206666431266816" />
             <SocialCard icon={Mail} label="Kirim Email" value={personalInfo.email} href={`mailto:${personalInfo.email}`} />
-            {/* DISCORD LIVE CARD */}
-            <DiscordLiveCard username={personalInfo.discord} href="https://discord.com/" />
             <SocialCard icon={CustomInstagram} label="Instagram" value={`@${personalInfo.instagram}`} href={`https://instagram.com/${personalInfo.instagram}`} />
             <SocialCard icon={CustomFacebook} label="Facebook" value={personalInfo.facebook} href={personalInfo.facebookLink} />
             <SocialCard icon={CustomGithub} label="GitHub" value={`@${personalInfo.githubMain}`} href={`https://github.com/${personalInfo.githubMain}`} />
