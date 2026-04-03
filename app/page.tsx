@@ -70,33 +70,22 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
     let heartbeatInterval: NodeJS.Timeout;
 
     const connectWebSocket = () => {
-      // Connect pakai WebSocket agar instan tanpa loading
       ws = new WebSocket('wss://api.lanyard.rest/socket');
-
-      ws.onopen = () => {
-        // Minta langganan data ke server
-        ws.send(JSON.stringify({ op: 2, d: { subscribe_to_id: discordId } }));
-      };
+      ws.onopen = () => ws.send(JSON.stringify({ op: 2, d: { subscribe_to_id: discordId } }));
 
       ws.onmessage = (event) => {
         const msg = JSON.parse(event.data);
-        
-        if (msg.op === 1) { // Detak jantung koneksi (Heartbeat)
+        if (msg.op === 1) {
           heartbeatInterval = setInterval(() => {
-            if (ws.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify({ op: 3 }));
-            }
+            if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ op: 3 }));
           }, msg.d.heartbeat_interval);
-        } 
-        else if (msg.op === 0) { // Kalau ada UPDATE dari Discord
+        } else if (msg.op === 0) {
           if (msg.t === 'INIT_STATE' || msg.t === 'PRESENCE_UPDATE') {
             const userData = msg.d[discordId] || msg.d;
             setData(userData);
             
             if (userData.activities && userData.activities.length > 0) {
               const acts = userData.activities;
-              
-              // Logika deteksi pintar (DIPERBAIKI)
               const listening = acts.find((a: any) => a.type === 2 || a.name.toLowerCase().includes("music") || a.name.toLowerCase().includes("spotify"));
               const watching = acts.find((a: any) => a.type === 3 || (a.name.toLowerCase().includes("youtube") && !a.name.toLowerCase().includes("music")) || a.name.toLowerCase().includes("netflix"));
               const playing = acts.find((a: any) => a.type === 0);
@@ -119,7 +108,7 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
                 setActivity(`✨ Active: ${acts[0].name}`);
               }
             } else {
-              setActivity(null); // Kalau kosong
+              setActivity(null);
             }
           }
         }
@@ -127,12 +116,11 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
 
       ws.onclose = () => {
         clearInterval(heartbeatInterval);
-        setTimeout(connectWebSocket, 3000); // Reconnect auto kalau terputus
+        setTimeout(connectWebSocket, 3000);
       };
     };
 
     connectWebSocket();
-
     return () => {
       if (ws) ws.close();
       clearInterval(heartbeatInterval);
@@ -286,6 +274,7 @@ export default function Home() {
     setTimeout(() => setClickCount(0), 3000);
   };
 
+  // --- LOGIKA MESIN TERMINAL (DIPERBAIKI ANTI-BLOKIR) ---
   const handleTerminalCommand = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       const fullCmd = inputValue.trim().toLowerCase();
@@ -309,6 +298,7 @@ export default function Home() {
             { type: 'output', text: '  exit       - Close terminal' }
           ]);
           break;
+        
         case 'lookup':
           if (args.length < 2) {
             setTerminalHistory(prev => [...prev, { type: 'error', text: 'Usage: lookup <ip/domain>' }]);
@@ -321,6 +311,7 @@ export default function Home() {
             let ipToScan = target;
             const isIp = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(target);
             
+            // Kalau yang diketik domain (misal github.com), resolve dulu jadi IP via Google DNS
             if (!isIp) {
               setTerminalHistory(prev => [...prev, { type: 'system', text: `Resolving domain ${target}...` }]);
               const dnsRes = await fetch(`https://dns.google/resolve?name=${target}&type=A`);
@@ -333,12 +324,13 @@ export default function Home() {
               }
             }
 
+            // Tarik data intelijen pakai API yang aman (ipwho.is)
             setTerminalHistory(prev => [...prev, { type: 'system', text: `Extracting geolocation and ISP data for ${ipToScan}...` }]);
-            const osintRes = await fetch(`https://ipapi.co/${ipToScan}/json/`);
+            const osintRes = await fetch(`https://ipwho.is/${ipToScan}`);
             const osintData = await osintRes.json();
 
-            if (osintData.error) {
-               throw new Error(osintData.reason || 'Invalid IP/Domain');
+            if (!osintData.success) {
+               throw new Error(osintData.message || 'Invalid IP/Domain');
             }
 
             setTerminalHistory(prev => [...prev, 
@@ -346,10 +338,10 @@ export default function Home() {
               { type: 'output', text: '[ OSINT REPORT ]' },
               { type: 'output', text: `Target       : ${target}` },
               { type: 'output', text: `IP Address   : ${osintData.ip}` },
-              { type: 'output', text: `Network      : ${osintData.network || 'N/A'}` },
-              { type: 'output', text: `Location     : ${osintData.city}, ${osintData.region}, ${osintData.country_name}` },
+              { type: 'output', text: `Location     : ${osintData.city}, ${osintData.region}, ${osintData.country}` },
               { type: 'output', text: `Coordinates  : ${osintData.latitude}, ${osintData.longitude}` },
-              { type: 'output', text: `ISP / Org    : ${osintData.org || osintData.asn || 'Unknown'}` },
+              { type: 'output', text: `ISP / Org    : ${osintData.connection.isp} / ${osintData.connection.org}` },
+              { type: 'output', text: `ASN          : ${osintData.connection.asn}` },
               { type: 'output', text: '-----------------------------------------' }
             ]);
 
@@ -357,6 +349,7 @@ export default function Home() {
             setTerminalHistory(prev => [...prev, { type: 'error', text: `OSINT Scan Failed: ${err.message}` }]);
           }
           break;
+
         case 'sysinfo':
           setTerminalHistory(prev => [...prev, { type: 'system', text: 'Initiating deep scan on target network and system...' }]);
           try {
@@ -375,7 +368,8 @@ export default function Home() {
             else if (ua.includes("Edg")) browser = "Edge";
             else if (ua.includes("OPR") || ua.includes("Opera")) browser = "Opera";
 
-            const res = await fetch('https://ipapi.co/json/');
+            // Pake API ipwho.is yang anti-blokir buat cari info visitor aslinya
+            const res = await fetch('https://ipwho.is/');
             const data = await res.json();
             
             setTerminalHistory(prev => [...prev, 
@@ -384,14 +378,15 @@ export default function Home() {
               { type: 'output', text: `User OS      : ${os} ${osVersion}` },
               { type: 'output', text: `Browser      : ${browser}` },
               { type: 'output', text: `IP Address   : ${data.ip || 'Hidden'}` },
-              { type: 'output', text: `Location     : ${data.city || 'Unknown'}, ${data.country_name || 'Unknown'}` },
-              { type: 'output', text: `ISP / Org    : ${data.org || 'Unknown'}` },
+              { type: 'output', text: `Location     : ${data.city || 'Unknown'}, ${data.country || 'Unknown'}` },
+              { type: 'output', text: `ISP / Org    : ${data.connection?.isp || 'Unknown'}` },
               { type: 'output', text: '-----------------------------------------' }
             ]);
           } catch (err) {
             setTerminalHistory(prev => [...prev, { type: 'error', text: 'Target firewall detected. Failed to extract network data.' }]);
           }
           break;
+
         case 'ip':
           setTerminalHistory(prev => [...prev, { type: 'system', text: 'Bypassing proxy... Fetching public IP...' }]);
           try {
@@ -402,6 +397,7 @@ export default function Home() {
             setTerminalHistory(prev => [...prev, { type: 'error', text: 'Connection blocked. Failed to fetch IP.' }]);
           }
           break;
+
         case 'serverinfo':
           setTerminalHistory(prev => [...prev, 
             { type: 'output', text: 'HOST       : Vercel Edge Network' },
@@ -410,9 +406,11 @@ export default function Home() {
             { type: 'output', text: 'STATUS     : Online & Secured' }
           ]);
           break;
+
         case 'clear':
           setTerminalHistory([]);
           break;
+
         case 'exit':
           setShowEasterEgg(false);
           setTerminalHistory([
@@ -420,6 +418,7 @@ export default function Home() {
             { type: 'system', text: 'Type "help" to see available commands.' }
           ]);
           break;
+
         default:
           setTerminalHistory(prev => [...prev, { type: 'error', text: `Command not found: ${cmd}. Type "help" for a list of commands.` }]);
           break;
