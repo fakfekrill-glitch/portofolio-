@@ -120,22 +120,22 @@ const SocialCard = ({ icon: Icon, label, value, href, isSuspended = false }: any
     target="_blank"
     rel="noopener noreferrer"
     variants={fadeUp}
-    className={`group flex items-center gap-4 p-4 md:p-5 rounded-2xl border transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-1 
+    className={`group flex items-center gap-3 sm:gap-4 p-4 md:p-5 rounded-2xl border transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-1 
       ${isSuspended 
         ? 'bg-neutral-50 dark:bg-neutral-900/50 border-red-200 dark:border-red-900/30 hover:border-red-400 dark:hover:border-red-500 opacity-80' 
         : 'bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 hover:border-blue-500 dark:hover:border-blue-500'}`}
   >
-    <div className={`p-3 rounded-xl ${isSuspended ? 'bg-red-50 dark:bg-red-950/50 text-red-500' : 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400'}`}>
-      <Icon size={24} />
+    <div className={`p-2.5 sm:p-3 rounded-xl shrink-0 ${isSuspended ? 'bg-red-50 dark:bg-red-950/50 text-red-500' : 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400'}`}>
+      <Icon size={20} className="sm:w-6 sm:h-6" />
     </div>
-    <div className="overflow-hidden">
+    <div className="overflow-hidden flex-1">
       <p className="text-[10px] md:text-xs text-neutral-500 uppercase tracking-wider truncate">{label}</p>
-      <p className={`text-base md:text-lg font-semibold tracking-tight transition-colors truncate
+      <p className={`text-sm sm:text-base md:text-lg font-semibold tracking-tight transition-colors truncate
         ${isSuspended ? 'text-red-600 dark:text-red-400 line-through decoration-red-500/50' : 'text-neutral-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400'}`}>
         {value}
       </p>
     </div>
-    <ArrowRight size={18} className={`ml-auto shrink-0 opacity-0 group-hover:opacity-100 transition-all transform group-hover:translate-x-1 ${isSuspended ? 'text-red-500' : 'text-blue-500'}`} />
+    <ArrowRight size={16} className={`ml-1 shrink-0 opacity-0 group-hover:opacity-100 transition-all transform group-hover:translate-x-1 hidden sm:block ${isSuspended ? 'text-red-500' : 'text-blue-500'}`} />
   </motion.a>
 );
 
@@ -183,7 +183,10 @@ export default function Home() {
     const targetId = href.replace(/.*\#/, "");
     const elem = document.getElementById(targetId);
     if (elem) {
-      elem.scrollIntoView({ behavior: "smooth" });
+      // Offset sedikit buat nyesuaiin padding atas di mobile
+      const yOffset = -80; 
+      const y = elem.getBoundingClientRect().top + window.scrollY + yOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
     }
   };
 
@@ -201,7 +204,7 @@ export default function Home() {
     }, 3000);
   };
 
-  // --- LOGIKA COMMAND TERMINAL (UPDATED) ---
+  // --- LOGIKA COMMAND TERMINAL ---
   const handleTerminalCommand = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       const cmd = inputValue.trim().toLowerCase();
@@ -215,7 +218,7 @@ export default function Home() {
         case 'help':
           setTerminalHistory(prev => [...prev, 
             { type: 'output', text: 'Available commands:' },
-            { type: 'output', text: '  sysinfo    - Extract local & network target specifications' },
+            { type: 'output', text: '  sysinfo    - Extract local & network target specs' },
             { type: 'output', text: '  ip         - Fetch target public IP Address (Basic)' },
             { type: 'output', text: '  serverinfo - Display Vercel host details' },
             { type: 'output', text: '  clear      - Clear the terminal screen' },
@@ -319,109 +322,65 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen pt-28 md:pt-32 pb-32 overflow-hidden relative">
+    <div className="min-h-screen pt-20 md:pt-32 pb-32 overflow-hidden relative">
       
       {/* --- FLOATING NAVIGATION DOCK --- */}
       <motion.nav 
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.5, type: "spring", stiffness: 200, damping: 20 }}
-        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xl border border-neutral-200 dark:border-neutral-800 px-4 md:px-6 py-3 rounded-full flex gap-4 md:gap-8 shadow-2xl"
+        className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-40 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-xl border border-neutral-200 dark:border-neutral-800 px-3 sm:px-6 py-2.5 sm:py-3 rounded-full flex gap-2 sm:gap-6 md:gap-8 shadow-2xl w-max max-w-[95vw] overflow-x-auto scrollbar-hide"
       >
-        <a href="#about" onClick={handleScroll} className="flex flex-col items-center gap-1 text-neutral-500 hover:text-blue-500 transition-colors group">
-          <div className="p-2 rounded-full group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 transition-colors">
-            <HomeIcon size={20} />
+        <a href="#about" onClick={handleScroll} className="flex flex-col items-center gap-1 text-neutral-500 hover:text-blue-500 transition-colors group px-2">
+          <div className="p-1.5 sm:p-2 rounded-full group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 transition-colors">
+            <HomeIcon size={20} className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
-          <span className="text-[10px] font-medium hidden md:block">Tentang</span>
+          <span className="text-[10px] font-medium hidden sm:block">Tentang</span>
         </a>
-        <a href="#experience" onClick={handleScroll} className="flex flex-col items-center gap-1 text-neutral-500 hover:text-blue-500 transition-colors group">
-          <div className="p-2 rounded-full group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 transition-colors">
-            <Briefcase size={20} />
+        <a href="#experience" onClick={handleScroll} className="flex flex-col items-center gap-1 text-neutral-500 hover:text-blue-500 transition-colors group px-2">
+          <div className="p-1.5 sm:p-2 rounded-full group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 transition-colors">
+            <Briefcase size={20} className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
-          <span className="text-[10px] font-medium hidden md:block">Keahlian</span>
+          <span className="text-[10px] font-medium hidden sm:block">Keahlian</span>
         </a>
-        <a href="#certificates" onClick={handleScroll} className="flex flex-col items-center gap-1 text-neutral-500 hover:text-blue-500 transition-colors group">
-          <div className="p-2 rounded-full group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 transition-colors">
-            <FileBadge size={20} />
+        <a href="#certificates" onClick={handleScroll} className="flex flex-col items-center gap-1 text-neutral-500 hover:text-blue-500 transition-colors group px-2">
+          <div className="p-1.5 sm:p-2 rounded-full group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 transition-colors">
+            <FileBadge size={20} className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
-          <span className="text-[10px] font-medium hidden md:block">Sertifikat</span>
+          <span className="text-[10px] font-medium hidden sm:block">Sertifikat</span>
         </a>
-        <a href="#gallery" onClick={handleScroll} className="flex flex-col items-center gap-1 text-neutral-500 hover:text-blue-500 transition-colors group">
-          <div className="p-2 rounded-full group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 transition-colors">
-            <ImageIcon size={20} />
+        <a href="#gallery" onClick={handleScroll} className="flex flex-col items-center gap-1 text-neutral-500 hover:text-blue-500 transition-colors group px-2">
+          <div className="p-1.5 sm:p-2 rounded-full group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 transition-colors">
+            <ImageIcon size={20} className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
-          <span className="text-[10px] font-medium hidden md:block">Galeri</span>
+          <span className="text-[10px] font-medium hidden sm:block">Galeri</span>
         </a>
-        <a href="#contact" onClick={handleScroll} className="flex flex-col items-center gap-1 text-neutral-500 hover:text-blue-500 transition-colors group">
-          <div className="p-2 rounded-full group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 transition-colors">
-            <Phone size={20} />
+        <a href="#contact" onClick={handleScroll} className="flex flex-col items-center gap-1 text-neutral-500 hover:text-blue-500 transition-colors group px-2">
+          <div className="p-1.5 sm:p-2 rounded-full group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 transition-colors">
+            <Phone size={20} className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
-          <span className="text-[10px] font-medium hidden md:block">Kontak</span>
+          <span className="text-[10px] font-medium hidden sm:block">Kontak</span>
         </a>
       </motion.nav>
 
       {/* --- HERO SECTION --- */}
-      <section id="about" className="max-w-7xl mx-auto px-6 min-h-[85vh] flex items-center mb-16 md:mb-0">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-16 items-center">
+      <section id="about" className="max-w-7xl mx-auto px-4 sm:px-6 min-h-[85vh] flex items-center mb-16 md:mb-0">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-center w-full">
           
+          {/* FOTO PROFIL (PINDAH KE ATAS DI MOBILE) */}
           <motion.div 
-            className="md:col-span-7 space-y-6 md:space-y-8 order-2 md:order-1"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: false, amount: 0.1 }}
-            variants={staggerContainer}
-          >
-            <motion.h2 variants={fadeUp} className="text-xs md:text-base text-blue-500 font-semibold tracking-widest uppercase">
-              🚀 {personalInfo.title}
-            </motion.h2>
-            
-            <motion.h1 variants={fadeUp} className="text-4xl sm:text-6xl md:text-8xl font-black tracking-tighter leading-[1.05] relative">
-              Membangun <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
-                Sistem & Ekosistem.
-              </span>
-            </motion.h1>
-            
-            <motion.p variants={fadeUp} className="max-w-2xl text-base md:text-xl text-neutral-600 dark:text-neutral-400 leading-relaxed">
-              Hai 👋, Saya {personalInfo.fullName}. {personalInfo.bio}
-            </motion.p>
-            
-            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 sm:gap-6 pt-2 md:pt-4 text-xs md:text-sm font-medium text-neutral-700 dark:text-neutral-300">
-              <div className="flex items-center gap-3 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 px-4 py-3 rounded-full shadow-sm w-full sm:w-auto">
-                <User size={16} className="text-blue-500 shrink-0" />
-                <span className="truncate">{personalInfo.fullName}</span>
-              </div>
-              <div className="flex items-center gap-3 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 px-4 py-3 rounded-full shadow-sm w-full sm:w-auto">
-                <School size={16} className="text-blue-500 shrink-0" />
-                <span className="truncate">{personalInfo.school}</span>
-              </div>
-              <div className="flex items-center gap-3 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 px-4 py-3 rounded-full shadow-sm w-full sm:w-auto">
-                <MapPin size={16} className="text-blue-500 shrink-0" />
-                <span className="truncate">{personalInfo.origin}</span>
-              </div>
-            </motion.div>
-            
-            <motion.div variants={fadeUp} className="pt-4 md:pt-6">
-              <a href="#experience" onClick={handleScroll} className="inline-block w-full sm:w-auto text-center px-10 py-4 bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 rounded-full font-bold hover:scale-105 transition-transform shadow-lg cursor-pointer">
-                Eksplorasi Karya 🛠️
-              </a>
-            </motion.div>
-          </motion.div>
-          
-          <motion.div 
-            className="md:col-span-5 relative order-1 md:order-2 mb-8 md:mb-0"
+            className="lg:col-span-5 relative order-1 mb-4 lg:mb-0 w-full flex justify-center"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: false, amount: 0.1 }}
             variants={fadeUp}
           >
-            <div className="hidden md:block absolute -top-6 -left-6 w-32 h-32 border-l-4 border-t-4 border-blue-500/30 rounded-tl-3xl z-0"></div>
-            <div className="hidden md:block absolute -bottom-6 -right-6 w-32 h-32 border-r-4 border-b-4 border-cyan-500/30 rounded-br-3xl z-0"></div>
+            <div className="hidden lg:block absolute -top-6 -left-6 w-32 h-32 border-l-4 border-t-4 border-blue-500/30 rounded-tl-3xl z-0"></div>
+            <div className="hidden lg:block absolute -bottom-6 -right-6 w-32 h-32 border-r-4 border-b-4 border-cyan-500/30 rounded-br-3xl z-0"></div>
             
-            {/* --- PEMICU EASTER EGG (KLIK 5 KALI) --- */}
             <div 
               onClick={handleImageClick}
-              className="relative aspect-square md:aspect-auto md:h-[600px] rounded-[2rem] md:rounded-3xl overflow-hidden shadow-2xl border-4 border-white dark:border-neutral-900 z-10 group mx-auto max-w-[300px] md:max-w-none cursor-crosshair"
+              className="relative w-48 h-48 sm:w-64 sm:h-64 lg:w-full lg:h-[600px] lg:max-w-none rounded-full lg:rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white dark:border-neutral-900 z-10 group cursor-crosshair mx-auto"
             >
               <Image 
                 src={personalInfo.photoPath}
@@ -431,23 +390,69 @@ export default function Home() {
                 className={`object-cover object-center group-hover:scale-110 transition-transform duration-1000 ease-out ${clickCount > 0 ? 'scale-105 opacity-90' : ''}`}
                 sizes="(max-w-768px) 100vw, 40vw"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/60 to-transparent opacity-100 md:opacity-60 group-hover:opacity-30 transition-opacity"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/60 to-transparent opacity-100 lg:opacity-60 group-hover:opacity-30 transition-opacity rounded-full lg:rounded-none"></div>
               
-              <div className="absolute bottom-6 left-6 z-20 text-white">
-                <p className="text-[10px] md:text-xs uppercase tracking-widest font-medium opacity-80">Portfolio</p>
-                <p className="text-xl md:text-2xl font-extrabold tracking-tighter">{personalInfo.firstName} <span className="font-light">{personalInfo.lastName}</span></p>
+              <div className="absolute bottom-4 left-0 right-0 text-center lg:text-left lg:bottom-6 lg:left-6 z-20 text-white lg:right-auto">
+                <p className="text-[8px] sm:text-[10px] lg:text-xs uppercase tracking-widest font-medium opacity-80 hidden lg:block">Portfolio</p>
+                <p className="text-sm sm:text-lg lg:text-2xl font-extrabold tracking-tighter drop-shadow-md lg:drop-shadow-none">{personalInfo.firstName} <span className="font-light">{personalInfo.lastName}</span></p>
               </div>
             </div>
           </motion.div>
+
+          {/* TEKS HERO (PINDAH KE BAWAH DI MOBILE) */}
+          <motion.div 
+            className="lg:col-span-7 space-y-4 sm:space-y-6 lg:space-y-8 order-2 text-center lg:text-left"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.1 }}
+            variants={staggerContainer}
+          >
+            <motion.h2 variants={fadeUp} className="text-[10px] sm:text-xs lg:text-base text-blue-500 font-semibold tracking-widest uppercase">
+              🚀 {personalInfo.title}
+            </motion.h2>
+            
+            <motion.h1 variants={fadeUp} className="text-3xl sm:text-5xl lg:text-7xl xl:text-8xl font-black tracking-tighter leading-[1.1] relative">
+              Membangun <br className="hidden sm:block" />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
+                Sistem & Ekosistem.
+              </span>
+            </motion.h1>
+            
+            <motion.p variants={fadeUp} className="max-w-2xl mx-auto lg:mx-0 text-sm sm:text-base lg:text-xl text-neutral-600 dark:text-neutral-400 leading-relaxed px-4 lg:px-0">
+              Hai 👋, Saya {personalInfo.fullName}. {personalInfo.bio}
+            </motion.p>
+            
+            <motion.div variants={fadeUp} className="flex flex-wrap justify-center lg:justify-start gap-2 sm:gap-4 pt-2 lg:pt-4 text-[10px] sm:text-xs lg:text-sm font-medium text-neutral-700 dark:text-neutral-300">
+              <div className="flex items-center gap-2 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 px-3 py-2 sm:px-4 sm:py-3 rounded-full shadow-sm w-auto">
+                <User size={14} className="text-blue-500 shrink-0 sm:w-4 sm:h-4" />
+                <span className="truncate">{personalInfo.fullName}</span>
+              </div>
+              <div className="flex items-center gap-2 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 px-3 py-2 sm:px-4 sm:py-3 rounded-full shadow-sm w-auto">
+                <School size={14} className="text-blue-500 shrink-0 sm:w-4 sm:h-4" />
+                <span className="truncate">{personalInfo.school}</span>
+              </div>
+              <div className="flex items-center gap-2 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 px-3 py-2 sm:px-4 sm:py-3 rounded-full shadow-sm w-auto">
+                <MapPin size={14} className="text-blue-500 shrink-0 sm:w-4 sm:h-4" />
+                <span className="truncate">{personalInfo.origin}</span>
+              </div>
+            </motion.div>
+            
+            <motion.div variants={fadeUp} className="pt-4 lg:pt-6">
+              <a href="#experience" onClick={handleScroll} className="inline-block w-full sm:w-auto text-center px-8 py-3 sm:px-10 sm:py-4 bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 rounded-full font-bold text-sm sm:text-base hover:scale-105 transition-transform shadow-lg cursor-pointer">
+                Eksplorasi Karya 🛠️
+              </a>
+            </motion.div>
+          </motion.div>
+          
         </div>
       </section>
 
       {/* --- TEXT MARQUEE --- */}
-      <section className="w-full bg-blue-600 text-white py-4 md:py-5 overflow-hidden my-16 md:my-24 transform -rotate-2 scale-105 shadow-xl">
+      <section className="w-full bg-blue-600 text-white py-3 sm:py-4 md:py-5 overflow-hidden my-12 sm:my-16 md:my-24 transform -rotate-2 scale-105 shadow-xl">
         <motion.div 
           animate={{ x: [0, -1500] }} 
           transition={{ repeat: Infinity, duration: 25, ease: "linear" }}
-          className="whitespace-nowrap flex gap-8 md:gap-12 text-xl md:text-3xl font-black uppercase tracking-widest"
+          className="whitespace-nowrap flex gap-6 sm:gap-8 md:gap-12 text-sm sm:text-xl md:text-3xl font-black uppercase tracking-widest"
         >
           <span>• Web Development • IoT Systems • Hardware Tuning • Offensive Security • System Modding</span>
           <span>• Web Development • IoT Systems • Hardware Tuning • Offensive Security • System Modding</span>
@@ -456,13 +461,13 @@ export default function Home() {
       </section>
 
       {/* --- EXPERIENCE SECTION --- */}
-      <section id="experience" className="max-w-7xl mx-auto px-6 py-16 md:py-24">
+      <section id="experience" className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24">
         <motion.h2 
           initial="hidden" 
           whileInView="visible" 
           viewport={{ once: false, amount: 0.1 }}
           variants={fadeUp}
-          className="text-3xl md:text-6xl font-black mb-12 md:mb-20 border-b-2 pb-6 dark:border-neutral-800 tracking-tighter"
+          className="text-2xl sm:text-4xl md:text-6xl font-black mb-8 sm:mb-12 md:mb-20 border-b-2 pb-4 sm:pb-6 dark:border-neutral-800 tracking-tighter"
         >
           Eksplorasi & Keahlian ✨
         </motion.h2>
@@ -472,19 +477,19 @@ export default function Home() {
           whileInView="visible" 
           viewport={{ once: false, amount: 0.1 }}
           variants={staggerContainer}
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10"
+          className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-10"
         >
           {experienceData.map((exp, index) => (
             <motion.div 
               key={index}
               variants={fadeUp}
-              className="group p-6 md:p-10 rounded-3xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:border-blue-500 dark:hover:border-blue-500 transition-all duration-500 relative overflow-hidden shadow-sm hover:shadow-xl md:hover:-translate-y-1"
+              className="group p-5 sm:p-8 md:p-10 rounded-[1.5rem] sm:rounded-3xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:border-blue-500 dark:hover:border-blue-500 transition-all duration-500 relative overflow-hidden shadow-sm hover:shadow-xl md:hover:-translate-y-1"
             >
-              <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 to-cyan-400 scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-500"></div>
-              <h3 className="text-xl md:text-3xl font-bold mb-3 md:mb-5 tracking-tight group-hover:text-blue-600 dark:group-hover:text-blue-500 transition-colors">
+              <div className="absolute top-0 left-0 w-full h-1 sm:h-1.5 bg-gradient-to-r from-blue-500 to-cyan-400 scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-500"></div>
+              <h3 className="text-lg sm:text-2xl md:text-3xl font-bold mb-2 sm:mb-4 md:mb-5 tracking-tight group-hover:text-blue-600 dark:group-hover:text-blue-500 transition-colors">
                 {exp.title}
               </h3>
-              <p className="text-neutral-600 dark:text-neutral-400 leading-relaxed text-sm md:text-lg">
+              <p className="text-neutral-600 dark:text-neutral-400 leading-relaxed text-xs sm:text-sm md:text-lg">
                 {exp.desc}
               </p>
             </motion.div>
@@ -493,16 +498,16 @@ export default function Home() {
       </section>
 
       {/* --- CERTIFICATES --- */}
-      <section id="certificates" className="max-w-7xl mx-auto px-6 py-16 md:py-24">
+      <section id="certificates" className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24">
         <motion.div 
           initial="hidden" 
           whileInView="visible" 
           viewport={{ once: false, amount: 0.1 }}
           variants={fadeUp}
-          className="flex items-center gap-3 md:gap-4 mb-12 md:mb-16 border-b-2 pb-6 dark:border-neutral-800"
+          className="flex items-center gap-2 sm:gap-3 md:gap-4 mb-8 sm:mb-12 md:mb-16 border-b-2 pb-4 sm:pb-6 dark:border-neutral-800"
         >
-          <Award className="text-blue-500 w-8 h-8 md:w-10 md:h-10" />
-          <h2 className="text-3xl md:text-6xl font-black tracking-tighter">
+          <Award className="text-blue-500 w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10" />
+          <h2 className="text-2xl sm:text-4xl md:text-6xl font-black tracking-tighter">
             Prestasi & Sertifikat
           </h2>
         </motion.div>
@@ -512,14 +517,14 @@ export default function Home() {
           whileInView="visible" 
           viewport={{ once: false, amount: 0.1 }}
           variants={staggerContainer}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
         >
           {certificateImages.map((cert, index) => (
             <motion.div 
               key={index}
               variants={fadeUp}
               onClick={() => setSelectedImage(`/certificates/${cert}`)}
-              className="relative aspect-[4/3] rounded-2xl overflow-hidden group border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900 cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300"
+              className="relative aspect-[4/3] rounded-xl sm:rounded-2xl overflow-hidden group border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900 cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300"
             >
               <Image 
                 src={`/certificates/${cert}`}
@@ -529,8 +534,8 @@ export default function Home() {
                 sizes="(max-w-768px) 100vw, 50vw, 33vw"
               />
               <div className="absolute inset-0 bg-neutral-950/0 group-hover:bg-neutral-950/40 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                 <div className="p-3 rounded-full bg-white/20 backdrop-blur-sm text-white scale-50 group-hover:scale-100 transition-transform duration-300">
-                   <ZoomIn className="w-6 h-6" />
+                 <div className="p-2 sm:p-3 rounded-full bg-white/20 backdrop-blur-sm text-white scale-50 group-hover:scale-100 transition-transform duration-300">
+                   <ZoomIn className="w-5 h-5 sm:w-6 sm:h-6" />
                  </div>
               </div>
             </motion.div>
@@ -539,16 +544,16 @@ export default function Home() {
       </section>
 
       {/* --- DYNAMIC GALLERY SECTION --- */}
-      <section id="gallery" className="max-w-7xl mx-auto px-6 py-16 md:py-24">
+      <section id="gallery" className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24">
         <motion.div 
           initial="hidden" 
           whileInView="visible" 
           viewport={{ once: false, amount: 0.1 }}
           variants={fadeUp}
-          className="flex items-center gap-3 md:gap-4 mb-10 md:mb-16 border-b-2 pb-6 dark:border-neutral-800"
+          className="flex items-center gap-2 sm:gap-3 md:gap-4 mb-8 sm:mb-12 md:mb-16 border-b-2 pb-4 sm:pb-6 dark:border-neutral-800"
         >
-          <Camera className="text-blue-500 w-8 h-8 md:w-10 md:h-10" />
-          <h2 className="text-3xl md:text-6xl font-black tracking-tighter">
+          <Camera className="text-blue-500 w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10" />
+          <h2 className="text-2xl sm:text-4xl md:text-6xl font-black tracking-tighter">
             Dokumentasi & Bukti
           </h2>
         </motion.div>
@@ -559,7 +564,7 @@ export default function Home() {
             whileInView="visible" 
             viewport={{ once: false, amount: 0.1 }}
             variants={fadeUp}
-            className="text-neutral-500 text-center py-10 bg-neutral-100 dark:bg-neutral-900 rounded-3xl border border-dashed border-neutral-300 dark:border-neutral-800 text-sm md:text-base"
+            className="text-neutral-500 text-center py-8 sm:py-10 bg-neutral-100 dark:bg-neutral-900 rounded-[1.5rem] sm:rounded-3xl border border-dashed border-neutral-300 dark:border-neutral-800 text-xs sm:text-sm md:text-base"
           >
             Belum ada foto. Masukkan foto ke folder <code className="bg-neutral-200 dark:bg-neutral-800 px-2 py-1 rounded">public/projects</code>.
           </motion.p>
@@ -569,14 +574,14 @@ export default function Home() {
             whileInView="visible" 
             viewport={{ once: false, amount: 0.1 }}
             variants={staggerContainer}
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4"
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4"
           >
             {photos.map((photo, index) => (
               <motion.div 
                 key={index}
                 variants={fadeUp}
                 onClick={() => setSelectedImage(`/projects/${photo}`)}
-                className="relative aspect-square rounded-xl md:rounded-2xl overflow-hidden group border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900 cursor-pointer shadow-sm hover:shadow-2xl transition-all duration-300"
+                className="relative aspect-square rounded-lg sm:rounded-xl md:rounded-2xl overflow-hidden group border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900 cursor-pointer shadow-sm hover:shadow-2xl transition-all duration-300"
               >
                 <Image 
                   src={`/projects/${photo}`}
@@ -588,8 +593,8 @@ export default function Home() {
                 />
                 
                 <div className="absolute inset-0 bg-neutral-950/0 group-hover:bg-neutral-950/60 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                   <div className="p-2 md:p-3 rounded-full bg-white/20 backdrop-blur-sm text-white scale-50 group-hover:scale-100 transition-transform duration-300">
-                     <ZoomIn className="w-5 h-5 md:w-6 md:h-6" />
+                   <div className="p-1.5 sm:p-2 md:p-3 rounded-full bg-white/20 backdrop-blur-sm text-white scale-50 group-hover:scale-100 transition-transform duration-300">
+                     <ZoomIn className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
                    </div>
                 </div>
               </motion.div>
@@ -599,22 +604,22 @@ export default function Home() {
       </section>
 
       {/* --- FOOTER --- */}
-      <footer id="contact" className="max-w-7xl mx-auto px-6 pt-16 md:pt-20 pb-16">
+      <footer id="contact" className="max-w-7xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 md:pt-20 pb-16 sm:pb-24 lg:pb-16">
         <motion.div 
           initial="hidden" 
           whileInView="visible" 
           viewport={{ once: false, amount: 0.1 }}
           variants={staggerContainer}
-          className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-16 items-center"
+          className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 lg:gap-16 items-center"
         >
-          <motion.div variants={fadeUp} className="md:col-span-5 space-y-4 md:space-y-6 text-center md:text-left">
-            <h2 className="text-4xl md:text-7xl font-black tracking-tighter leading-none">Found <br/> Me On</h2>
-            <p className="text-base md:text-xl text-neutral-600 dark:text-neutral-400 max-w-xl mx-auto md:mx-0">
+          <motion.div variants={fadeUp} className="lg:col-span-5 space-y-3 sm:space-y-4 md:space-y-6 text-center lg:text-left">
+            <h2 className="text-3xl sm:text-5xl md:text-7xl font-black tracking-tighter leading-none">Found <br className="hidden lg:block"/> Me On</h2>
+            <p className="text-sm sm:text-base md:text-xl text-neutral-600 dark:text-neutral-400 max-w-xl mx-auto lg:mx-0">
               Silakan Hubungi Saya Jika Bertanya Sesuatu.
             </p>
           </motion.div>
 
-          <motion.div variants={staggerContainer} className="md:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+          <motion.div variants={staggerContainer} className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
             <SocialCard icon={Mail} label="Kirim Email" value={personalInfo.email} href={`mailto:${personalInfo.email}`} />
             <SocialCard icon={MessageSquare} label="Discord Username" value={personalInfo.discord} href="https://discord.com/" />
             <SocialCard icon={CustomInstagram} label="Instagram" value={`@${personalInfo.instagram}`} href={`https://instagram.com/${personalInfo.instagram}`} />
@@ -630,9 +635,9 @@ export default function Home() {
           whileInView="visible" 
           viewport={{ once: false }}
           variants={fadeUp}
-          className="text-center pt-16 md:pt-24 border-t dark:border-neutral-800 mt-12 md:mt-16"
+          className="text-center pt-12 sm:pt-16 md:pt-24 border-t dark:border-neutral-800 mt-10 sm:mt-12 md:mt-16"
         >
-          <p className="text-xs md:text-sm text-neutral-500">
+          <p className="text-[10px] sm:text-xs md:text-sm text-neutral-500">
             © {new Date().getFullYear()} {personalInfo.fullName}. All rights reserved. Made with ❤️ in Surabaya.
           </p>
         </motion.div>
@@ -648,18 +653,18 @@ export default function Home() {
             animate="visible"
             exit="hidden"
             onClick={() => setSelectedImage(null)}
-            className="fixed inset-0 z-50 bg-neutral-950/95 p-2 md:p-4 flex items-center justify-center cursor-pointer backdrop-blur-sm"
+            className="fixed inset-0 z-50 bg-neutral-950/95 p-2 sm:p-4 flex items-center justify-center cursor-pointer backdrop-blur-sm"
           >
             <button
               onClick={() => setSelectedImage(null)}
-              className="absolute top-4 right-4 md:top-6 md:right-6 z-10 p-2 md:p-3 rounded-full bg-white/10 dark:bg-black/20 backdrop-blur-md text-white hover:bg-white/20 transition-colors"
+              className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10 p-2 sm:p-3 rounded-full bg-white/10 dark:bg-black/20 backdrop-blur-md text-white hover:bg-white/20 transition-colors"
             >
-              <X className="w-5 h-5 md:w-6 md:h-6" />
+              <X className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
 
             <motion.div
               variants={imageVariant}
-              className="relative w-full max-w-7xl h-[80vh] md:h-[90vh] rounded-2xl md:rounded-3xl overflow-hidden cursor-default shadow-2xl flex items-center justify-center"
+              className="relative w-full max-w-7xl h-[70vh] sm:h-[80vh] md:h-[90vh] rounded-xl sm:rounded-2xl md:rounded-3xl overflow-hidden cursor-default shadow-2xl flex items-center justify-center"
               onClick={(e) => e.stopPropagation()}
             >
               <Image 
@@ -669,7 +674,7 @@ export default function Home() {
                 className="object-contain"
                 priority
               />
-              <div className="absolute bottom-2 md:bottom-4 left-2 md:left-4 p-1.5 md:p-2 px-3 md:px-4 rounded-lg bg-black/50 text-white/70 text-[10px] md:text-xs font-mono backdrop-blur-sm truncate max-w-[80%]">
+              <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 p-1 sm:p-1.5 md:p-2 px-2 sm:px-3 md:px-4 rounded-md sm:rounded-lg bg-black/50 text-white/70 text-[8px] sm:text-[10px] md:text-xs font-mono backdrop-blur-sm truncate max-w-[80%]">
                 {selectedImage.split('/').pop()}
               </div>
             </motion.div>
@@ -686,29 +691,29 @@ export default function Home() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.05 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 backdrop-blur-md"
+            className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-3 sm:p-4 backdrop-blur-md"
             onClick={() => setShowEasterEgg(false)}
           >
             <motion.div 
               initial={{ y: 20 }}
               animate={{ y: 0 }}
-              className="bg-black border border-green-500/50 rounded-xl shadow-[0_0_30px_rgba(34,197,94,0.3)] w-full max-w-3xl h-[60vh] md:h-[70vh] flex flex-col overflow-hidden relative"
+              className="bg-black border border-green-500/50 rounded-xl shadow-[0_0_20px_rgba(34,197,94,0.2)] sm:shadow-[0_0_30px_rgba(34,197,94,0.3)] w-full max-w-3xl h-[60vh] sm:h-[70vh] flex flex-col overflow-hidden relative"
               onClick={(e) => {
                 e.stopPropagation();
                 terminalInputRef.current?.focus();
               }}
             >
               {/* Header Terminal */}
-              <div className="flex items-center gap-3 p-4 bg-green-950/20 border-b border-green-500/30 shrink-0">
-                <Terminal className="text-green-500 w-6 h-6 animate-pulse" />
-                <h3 className="text-green-500 font-mono text-lg font-bold tracking-widest">daluraziq@server:~</h3>
-                <button onClick={() => setShowEasterEgg(false)} className="ml-auto text-green-500/50 hover:text-green-500">
-                  <X size={20} />
+              <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-green-950/20 border-b border-green-500/30 shrink-0">
+                <Terminal className="text-green-500 w-5 h-5 sm:w-6 sm:h-6 animate-pulse" />
+                <h3 className="text-green-500 font-mono text-sm sm:text-base md:text-lg font-bold tracking-widest truncate">daluraziq@server:~</h3>
+                <button onClick={() => setShowEasterEgg(false)} className="ml-auto text-green-500/50 hover:text-green-500 p-1">
+                  <X size={18} className="sm:w-5 sm:h-5" />
                 </button>
               </div>
               
               {/* Layar Output Terminal */}
-              <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-2 font-mono text-sm md:text-base scrollbar-thin scrollbar-thumb-green-500/20 scrollbar-track-transparent">
+              <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 space-y-1.5 sm:space-y-2 font-mono text-[10px] sm:text-xs md:text-sm lg:text-base scrollbar-thin scrollbar-thumb-green-500/20 scrollbar-track-transparent">
                 {terminalHistory.map((item, index) => (
                   <div key={index} className={`
                     ${item.type === 'system' ? 'text-green-400 opacity-80' : ''}
@@ -716,12 +721,12 @@ export default function Home() {
                     ${item.type === 'output' ? 'text-green-300' : ''}
                     ${item.type === 'error' ? 'text-red-400' : ''}
                   `}>
-                    <pre className="whitespace-pre-wrap font-inherit">{item.text}</pre>
+                    <pre className="whitespace-pre-wrap font-inherit break-words">{item.text}</pre>
                   </div>
                 ))}
                 
                 {/* Baris Input Interaktif */}
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center gap-1.5 sm:gap-2 mt-2">
                   <span className="text-green-500 shrink-0">root@dalu-server:~$</span>
                   <input 
                     ref={terminalInputRef}
@@ -729,13 +734,13 @@ export default function Home() {
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleTerminalCommand}
-                    className="flex-1 bg-transparent border-none outline-none text-white font-mono"
+                    className="flex-1 bg-transparent border-none outline-none text-white font-mono min-w-0"
                     spellCheck="false"
                     autoComplete="off"
                     autoFocus
                   />
                 </div>
-                <div ref={terminalEndRef} />
+                <div ref={terminalEndRef} className="h-4 sm:h-0" />
               </div>
             </motion.div>
           </motion.div>
