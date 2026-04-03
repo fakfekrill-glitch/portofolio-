@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion'; 
-import { MapPin, School, User, Mail, MessageSquare, ArrowRight, Camera, X, ZoomIn, Award, Home as HomeIcon, Briefcase, FileBadge, Image as ImageIcon, Phone, Terminal } from 'lucide-react';
+import { MapPin, School, User, Mail, MessageSquare, ArrowRight, Camera, X, ZoomIn, Award, Home as HomeIcon, Briefcase, FileBadge, Image as ImageIcon, Phone, Terminal, Download, Code, Cpu, ShieldAlert, Wrench, Clock } from 'lucide-react';
 import Image from 'next/image';
 
 // --- CUSTOM BRAND ICONS ---
@@ -51,6 +51,30 @@ const personalInfo = {
   githubSuspended: "dahlah270",
   steamLink: "https://steamcommunity.com/profiles/76561199395613672/"
 };
+
+// --- DATA TECH STACK & TOOLS (BARU) ---
+const techStackData = [
+  {
+    category: "Web Development",
+    icon: Code,
+    skills: ["Next.js", "React", "Tailwind CSS", "TypeScript", "Node.js"]
+  },
+  {
+    category: "Hardware & IoT",
+    icon: Cpu,
+    skills: ["ESP8266 / NodeMCU", "Arduino", "C++", "Sensor Integration", "Discord Webhooks"]
+  },
+  {
+    category: "Security & Modding",
+    icon: ShieldAlert,
+    skills: ["Kali Linux", "Magisk / KernelSU", "Custom ROMs", "Penetration Tools", "Python"]
+  },
+  {
+    category: "Tools & Software",
+    icon: Wrench,
+    skills: ["Git & GitHub", "VS Code", "Vercel", "Linux Terminal", "Juken 5++"]
+  }
+];
 
 // --- DATA PENGALAMAN ---
 const experienceData = [
@@ -143,6 +167,9 @@ export default function Home() {
   const [photos, setPhotos] = useState<string[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
+  // --- STATE JAM REAL-TIME ---
+  const [currentTime, setCurrentTime] = useState<string>('');
+
   // --- STATE EASTER EGG (INTERACTIVE TERMINAL) ---
   const [clickCount, setClickCount] = useState(0);
   const [showEasterEgg, setShowEasterEgg] = useState(false);
@@ -155,6 +182,7 @@ export default function Home() {
   const terminalInputRef = useRef<HTMLInputElement>(null);
   const terminalEndRef = useRef<HTMLDivElement>(null);
 
+  // Efek memuat galeri
   useEffect(() => {
     fetch('/api/gallery')
       .then((res) => res.json())
@@ -162,6 +190,18 @@ export default function Home() {
       .catch((err) => console.error("Gagal memuat galeri:", err));
   }, []);
 
+  // Efek Jam Real-time
+  useEffect(() => {
+    const updateClock = () => {
+      const now = new Date();
+      setCurrentTime(now.toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour12: false }));
+    };
+    updateClock(); // Jalankan sekali saat render
+    const timerId = setInterval(updateClock, 1000);
+    return () => clearInterval(timerId);
+  }, []);
+
+  // Efek Kunci Scroll
   useEffect(() => {
     if (selectedImage || showEasterEgg) {
       document.body.style.overflow = 'hidden';
@@ -183,7 +223,6 @@ export default function Home() {
     const targetId = href.replace(/.*\#/, "");
     const elem = document.getElementById(targetId);
     if (elem) {
-      // Offset sedikit buat nyesuaiin padding atas di mobile
       const yOffset = -80; 
       const y = elem.getBoundingClientRect().top + window.scrollY + yOffset;
       window.scrollTo({ top: y, behavior: 'smooth' });
@@ -219,7 +258,7 @@ export default function Home() {
           setTerminalHistory(prev => [...prev, 
             { type: 'output', text: 'Available commands:' },
             { type: 'output', text: '  sysinfo    - Extract local & network target specs' },
-            { type: 'output', text: '  ip         - Fetch target public IP Address (Basic)' },
+            { type: 'output', text: '  ip         - Fetch target public IP Address' },
             { type: 'output', text: '  serverinfo - Display Vercel host details' },
             { type: 'output', text: '  clear      - Clear the terminal screen' },
             { type: 'output', text: '  exit       - Close terminal' }
@@ -229,51 +268,33 @@ export default function Home() {
         case 'sysinfo':
           setTerminalHistory(prev => [...prev, { type: 'system', text: 'Initiating deep scan on target network and system...' }]);
           try {
-            // Deteksi OS dan Versi
             const ua = navigator.userAgent;
             let os = "Unknown OS";
             let osVersion = "Unknown";
             
-            if (ua.includes("Win")) { 
-              os = "Windows"; 
-              osVersion = ua.match(/Windows NT ([\d.]+)/)?.[1] || "NT"; 
-            } else if (ua.includes("Android")) { 
-              os = "Android"; 
-              osVersion = ua.match(/Android ([\d.]+)/)?.[1] || ""; 
-            } else if (ua.includes("Mac")) { 
-              os = "MacOS"; 
-              osVersion = ua.match(/Mac OS X ([\d_]+)/)?.[1]?.replace(/_/g, '.') || ""; 
-            } else if (ua.includes("iPhone") || ua.includes("iPad")) { 
-              os = "iOS"; 
-              osVersion = ua.match(/OS ([\d_]+)/)?.[1]?.replace(/_/g, '.') || ""; 
-            } else if (ua.includes("Linux")) { 
-              os = "Linux"; 
-            }
+            if (ua.includes("Win")) { os = "Windows"; osVersion = ua.match(/Windows NT ([\d.]+)/)?.[1] || "NT"; } 
+            else if (ua.includes("Android")) { os = "Android"; osVersion = ua.match(/Android ([\d.]+)/)?.[1] || ""; } 
+            else if (ua.includes("Mac")) { os = "MacOS"; osVersion = ua.match(/Mac OS X ([\d_]+)/)?.[1]?.replace(/_/g, '.') || ""; } 
+            else if (ua.includes("iPhone") || ua.includes("iPad")) { os = "iOS"; osVersion = ua.match(/OS ([\d_]+)/)?.[1]?.replace(/_/g, '.') || ""; } 
+            else if (ua.includes("Linux")) { os = "Linux"; }
 
-            // Deteksi Browser
             let browser = "Unknown";
             if (ua.includes("Chrome") && !ua.includes("Edg") && !ua.includes("OPR")) browser = "Chrome";
             else if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
             else if (ua.includes("Firefox")) browser = "Firefox";
             else if (ua.includes("Edg")) browser = "Edge";
             else if (ua.includes("OPR") || ua.includes("Opera")) browser = "Opera";
-            else if (ua.includes("SamsungBrowser")) browser = "Samsung Internet";
 
-            // Fetch Data Network dari API Publik
             const res = await fetch('https://ipapi.co/json/');
             const data = await res.json();
             
             setTerminalHistory(prev => [...prev, 
               { type: 'output', text: '-----------------------------------------' },
               { type: 'output', text: '[ TARGET ANALYSIS COMPLETED ]' },
-              { type: 'output', text: `User OS      : ${os}` },
-              { type: 'output', text: `OS Version   : ${osVersion}` },
+              { type: 'output', text: `User OS      : ${os} ${osVersion}` },
               { type: 'output', text: `Browser      : ${browser}` },
               { type: 'output', text: `IP Address   : ${data.ip || 'Hidden'}` },
-              { type: 'output', text: `IP Type      : ${data.version || 'Unknown'}` },
-              { type: 'output', text: `Location     : ${data.city || 'Unknown'}, ${data.region || 'Unknown'}` },
-              { type: 'output', text: `Country Code : ${data.country_code || 'Unknown'}` },
-              { type: 'output', text: `Geolocation  : ${data.latitude || '0'}, ${data.longitude || '0'}` },
+              { type: 'output', text: `Location     : ${data.city || 'Unknown'}, ${data.country_name || 'Unknown'}` },
               { type: 'output', text: `ISP / Org    : ${data.org || 'Unknown'}` },
               { type: 'output', text: '-----------------------------------------' }
             ]);
@@ -337,6 +358,12 @@ export default function Home() {
           </div>
           <span className="text-[10px] font-medium hidden sm:block">Tentang</span>
         </a>
+        <a href="#skills" onClick={handleScroll} className="flex flex-col items-center gap-1 text-neutral-500 hover:text-blue-500 transition-colors group px-2">
+          <div className="p-1.5 sm:p-2 rounded-full group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 transition-colors">
+            <Cpu size={20} className="w-5 h-5 sm:w-6 sm:h-6" />
+          </div>
+          <span className="text-[10px] font-medium hidden sm:block">Arsenal</span>
+        </a>
         <a href="#experience" onClick={handleScroll} className="flex flex-col items-center gap-1 text-neutral-500 hover:text-blue-500 transition-colors group px-2">
           <div className="p-1.5 sm:p-2 rounded-full group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 transition-colors">
             <Briefcase size={20} className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -367,7 +394,7 @@ export default function Home() {
       <section id="about" className="max-w-7xl mx-auto px-4 sm:px-6 min-h-[85vh] flex items-center mb-16 md:mb-0">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-center w-full">
           
-          {/* FOTO PROFIL (PINDAH KE ATAS DI MOBILE) */}
+          {/* FOTO PROFIL */}
           <motion.div 
             className="lg:col-span-5 relative order-1 mb-4 lg:mb-0 w-full flex justify-center"
             initial="hidden"
@@ -399,7 +426,7 @@ export default function Home() {
             </div>
           </motion.div>
 
-          {/* TEKS HERO (PINDAH KE BAWAH DI MOBILE) */}
+          {/* TEKS HERO */}
           <motion.div 
             className="lg:col-span-7 space-y-4 sm:space-y-6 lg:space-y-8 order-2 text-center lg:text-left"
             initial="hidden"
@@ -407,7 +434,16 @@ export default function Home() {
             viewport={{ once: false, amount: 0.1 }}
             variants={staggerContainer}
           >
-            <motion.h2 variants={fadeUp} className="text-[10px] sm:text-xs lg:text-base text-blue-500 font-semibold tracking-widest uppercase">
+            {/* LIVE STATUS BANNER (BARU) */}
+            <motion.div variants={fadeUp} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900/50 text-green-700 dark:text-green-400 text-[10px] sm:text-xs font-mono mx-auto lg:mx-0">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </span>
+              Status: Exploring Systems • WIB {currentTime}
+            </motion.div>
+
+            <motion.h2 variants={fadeUp} className="text-[10px] sm:text-xs lg:text-base text-blue-500 font-semibold tracking-widest uppercase mt-2">
                {personalInfo.title}
             </motion.h2>
             
@@ -437,9 +473,14 @@ export default function Home() {
               </div>
             </motion.div>
             
-            <motion.div variants={fadeUp} className="pt-4 lg:pt-6">
-              <a href="#experience" onClick={handleScroll} className="inline-block w-full sm:w-auto text-center px-8 py-3 sm:px-10 sm:py-4 bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 rounded-full font-bold text-sm sm:text-base hover:scale-105 transition-transform shadow-lg cursor-pointer">
+            <motion.div variants={fadeUp} className="pt-4 lg:pt-6 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+              <a href="#experience" onClick={handleScroll} className="w-full sm:w-auto text-center px-8 py-3 sm:px-10 sm:py-4 bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 rounded-full font-bold text-sm sm:text-base hover:scale-105 transition-transform shadow-lg cursor-pointer">
                 Eksplorasi Karya 🛠️
+              </a>
+              {/* TOMBOL DOWNLOAD CV (BARU) */}
+              <a href="/cv.pdf" download className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3 sm:px-8 sm:py-4 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-white rounded-full font-bold text-sm sm:text-base hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors shadow-sm cursor-pointer">
+                <Download size={18} />
+                Download CV
               </a>
             </motion.div>
           </motion.div>
@@ -460,8 +501,57 @@ export default function Home() {
         </motion.div>
       </section>
 
+      {/* --- TECH ARSENAL / SKILLS (BARU) --- */}
+      <section id="skills" className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24">
+        <motion.div 
+          initial="hidden" 
+          whileInView="visible" 
+          viewport={{ once: false, amount: 0.1 }}
+          variants={fadeUp}
+          className="flex flex-col items-center text-center mb-10 sm:mb-16"
+        >
+          <div className="p-3 bg-blue-50 dark:bg-blue-950/30 text-blue-500 rounded-2xl mb-4">
+            <Cpu size={32} />
+          </div>
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tighter mb-4">
+            Tech Arsenal & Tools
+          </h2>
+          <p className="text-sm sm:text-base text-neutral-500 max-w-2xl">
+            Kumpulan teknologi, bahasa pemrograman, dan alat yang biasa saya gunakan untuk merakit sistem dan memecahkan masalah.
+          </p>
+        </motion.div>
+
+        <motion.div 
+          initial="hidden" 
+          whileInView="visible" 
+          viewport={{ once: false, amount: 0.1 }}
+          variants={staggerContainer}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
+        >
+          {techStackData.map((tech, index) => (
+            <motion.div 
+              key={index}
+              variants={fadeUp}
+              className="p-6 sm:p-8 rounded-3xl bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 hover:border-blue-500 transition-colors"
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <tech.icon className="text-blue-500 w-6 h-6 sm:w-8 sm:h-8" />
+                <h3 className="font-bold text-lg">{tech.category}</h3>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {tech.skills.map((skill, idx) => (
+                  <span key={idx} className="px-3 py-1.5 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg text-xs sm:text-sm font-medium text-neutral-700 dark:text-neutral-300 shadow-sm">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+      </section>
+
       {/* --- EXPERIENCE SECTION --- */}
-      <section id="experience" className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24">
+      <section id="experience" className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24 border-t dark:border-neutral-800">
         <motion.h2 
           initial="hidden" 
           whileInView="visible" 
@@ -604,7 +694,7 @@ export default function Home() {
       </section>
 
       {/* --- FOOTER --- */}
-      <footer id="contact" className="max-w-7xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 md:pt-20 pb-16 sm:pb-24 lg:pb-16">
+      <footer id="contact" className="max-w-7xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 md:pt-20 pb-16 sm:pb-24 lg:pb-16 border-t dark:border-neutral-800">
         <motion.div 
           initial="hidden" 
           whileInView="visible" 
@@ -635,7 +725,7 @@ export default function Home() {
           whileInView="visible" 
           viewport={{ once: false }}
           variants={fadeUp}
-          className="text-center pt-12 sm:pt-16 md:pt-24 border-t dark:border-neutral-800 mt-10 sm:mt-12 md:mt-16"
+          className="text-center pt-12 sm:pt-16 md:pt-24 mt-10 sm:mt-12 md:mt-16"
         >
           <p className="text-[10px] sm:text-xs md:text-sm text-neutral-500">
             © {new Date().getFullYear()} {personalInfo.fullName}. All rights reserved. Made with ❤️ in Surabaya.
