@@ -88,7 +88,7 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
             }
           }, msg.d.heartbeat_interval);
         } 
-        else if (msg.op === 0) { // Kalau ada UPDATE / GANTI LAGU dari Discord
+        else if (msg.op === 0) { // Kalau ada UPDATE dari Discord
           if (msg.t === 'INIT_STATE' || msg.t === 'PRESENCE_UPDATE') {
             const userData = msg.d[discordId] || msg.d;
             setData(userData);
@@ -96,20 +96,23 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
             if (userData.activities && userData.activities.length > 0) {
               const acts = userData.activities;
               
-              // Logika deteksi pintar
-              const watching = acts.find((a: any) => a.type === 3 || a.name.toLowerCase().includes("youtube"));
-              const listening = acts.find((a: any) => a.type === 2 || a.name.includes("Music") || a.name.includes("Spotify"));
+              // Logika deteksi pintar (DIPERBAIKI)
+              // Cek musik TERLEBIH DAHULU supaya YouTube Music nggak kedetect sebagai Watching
+              const listening = acts.find((a: any) => a.type === 2 || a.name.toLowerCase().includes("music") || a.name.toLowerCase().includes("spotify"));
+              // Cek watching HANYA JIKA namanya mengandung YouTube/Netflix dan TIDAK mengandung kata Music
+              const watching = acts.find((a: any) => a.type === 3 || (a.name.toLowerCase().includes("youtube") && !a.name.toLowerCase().includes("music")) || a.name.toLowerCase().includes("netflix"));
               const playing = acts.find((a: any) => a.type === 0);
               const customStatus = acts.find((a: any) => a.type === 4);
 
-              if (watching) {
-                const title = watching.details || watching.name;
-                const state = watching.state ? ` - ${watching.state}` : '';
-                setActivity(`▶️ Watching: ${title}${state}`);
-              } else if (listening) {
+              // Cek secara berurutan sesuai prioritas
+              if (listening) {
                 const song = listening.details || listening.name;
                 const artist = listening.state ? ` - ${listening.state}` : '';
                 setActivity(`🎵 Listening: ${song}${artist}`);
+              } else if (watching) {
+                const title = watching.details || watching.name;
+                const state = watching.state ? ` - ${watching.state}` : '';
+                setActivity(`▶️ Watching: ${title}${state}`);
               } else if (playing) {
                 const details = playing.details ? ` - ${playing.details}` : '';
                 setActivity(`🎮 Playing: ${playing.name}${details}`);
@@ -127,7 +130,7 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
 
       ws.onclose = () => {
         clearInterval(heartbeatInterval);
-        setTimeout(connectWebSocket, 3000); // Reconnect kalau terputus
+        setTimeout(connectWebSocket, 3000); // Reconnect auto kalau terputus
       };
     };
 
@@ -449,7 +452,7 @@ export default function Home() {
             </motion.div>
 
             <motion.h2 variants={fadeUp} className="text-[10px] sm:text-xs lg:text-base text-blue-500 font-semibold tracking-widest uppercase mt-2">
-               {personalInfo.title}
+              🚀 {personalInfo.title}
             </motion.h2>
             
             <motion.h1 variants={fadeUp} className="text-3xl sm:text-5xl lg:text-7xl xl:text-8xl font-black tracking-tighter leading-[1.1] relative">
