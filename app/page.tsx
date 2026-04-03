@@ -97,14 +97,11 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
               const acts = userData.activities;
               
               // Logika deteksi pintar (DIPERBAIKI)
-              // Cek musik TERLEBIH DAHULU supaya YouTube Music nggak kedetect sebagai Watching
               const listening = acts.find((a: any) => a.type === 2 || a.name.toLowerCase().includes("music") || a.name.toLowerCase().includes("spotify"));
-              // Cek watching HANYA JIKA namanya mengandung YouTube/Netflix dan TIDAK mengandung kata Music
               const watching = acts.find((a: any) => a.type === 3 || (a.name.toLowerCase().includes("youtube") && !a.name.toLowerCase().includes("music")) || a.name.toLowerCase().includes("netflix"));
               const playing = acts.find((a: any) => a.type === 0);
               const customStatus = acts.find((a: any) => a.type === 4);
 
-              // Cek secara berurutan sesuai prioritas
               if (listening) {
                 const song = listening.details || listening.name;
                 const artist = listening.state ? ` - ${listening.state}` : '';
@@ -291,11 +288,14 @@ export default function Home() {
 
   const handleTerminalCommand = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      const cmd = inputValue.trim().toLowerCase();
+      const fullCmd = inputValue.trim().toLowerCase();
       setInputValue('');
-      if (!cmd) return;
+      if (!fullCmd) return;
 
-      setTerminalHistory(prev => [...prev, { type: 'input', text: `root@dalu-server:~$ ${cmd}` }]);
+      const args = fullCmd.split(' ');
+      const cmd = args[0];
+
+      setTerminalHistory(prev => [...prev, { type: 'input', text: `root@proot:~$ ${fullCmd}` }]);
 
       switch (cmd) {
         case 'help':
@@ -303,10 +303,59 @@ export default function Home() {
             { type: 'output', text: 'Available commands:' },
             { type: 'output', text: '  sysinfo    - Extract local & network target specs' },
             { type: 'output', text: '  ip         - Fetch target public IP Address' },
+            { type: 'output', text: '  lookup     - OSINT IP/Domain lookup (e.g., lookup github.com)' },
             { type: 'output', text: '  serverinfo - Display Vercel host details' },
             { type: 'output', text: '  clear      - Clear the terminal screen' },
             { type: 'output', text: '  exit       - Close terminal' }
           ]);
+          break;
+        case 'lookup':
+          if (args.length < 2) {
+            setTerminalHistory(prev => [...prev, { type: 'error', text: 'Usage: lookup <ip/domain>' }]);
+            break;
+          }
+          const target = args[1];
+          setTerminalHistory(prev => [...prev, { type: 'system', text: `Initiating OSINT scan on ${target}...` }]);
+          
+          try {
+            let ipToScan = target;
+            const isIp = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(target);
+            
+            if (!isIp) {
+              setTerminalHistory(prev => [...prev, { type: 'system', text: `Resolving domain ${target}...` }]);
+              const dnsRes = await fetch(`https://dns.google/resolve?name=${target}&type=A`);
+              const dnsData = await dnsRes.json();
+              if (dnsData.Answer && dnsData.Answer.length > 0) {
+                ipToScan = dnsData.Answer[0].data;
+                setTerminalHistory(prev => [...prev, { type: 'system', text: `Resolved to IP: ${ipToScan}` }]);
+              } else {
+                throw new Error('Domain resolution failed.');
+              }
+            }
+
+            setTerminalHistory(prev => [...prev, { type: 'system', text: `Extracting geolocation and ISP data for ${ipToScan}...` }]);
+            const osintRes = await fetch(`https://ipapi.co/${ipToScan}/json/`);
+            const osintData = await osintRes.json();
+
+            if (osintData.error) {
+               throw new Error(osintData.reason || 'Invalid IP/Domain');
+            }
+
+            setTerminalHistory(prev => [...prev, 
+              { type: 'output', text: '-----------------------------------------' },
+              { type: 'output', text: '[ OSINT REPORT ]' },
+              { type: 'output', text: `Target       : ${target}` },
+              { type: 'output', text: `IP Address   : ${osintData.ip}` },
+              { type: 'output', text: `Network      : ${osintData.network || 'N/A'}` },
+              { type: 'output', text: `Location     : ${osintData.city}, ${osintData.region}, ${osintData.country_name}` },
+              { type: 'output', text: `Coordinates  : ${osintData.latitude}, ${osintData.longitude}` },
+              { type: 'output', text: `ISP / Org    : ${osintData.org || osintData.asn || 'Unknown'}` },
+              { type: 'output', text: '-----------------------------------------' }
+            ]);
+
+          } catch (err: any) {
+            setTerminalHistory(prev => [...prev, { type: 'error', text: `OSINT Scan Failed: ${err.message}` }]);
+          }
           break;
         case 'sysinfo':
           setTerminalHistory(prev => [...prev, { type: 'system', text: 'Initiating deep scan on target network and system...' }]);
