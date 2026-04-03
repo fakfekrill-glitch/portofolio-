@@ -498,7 +498,7 @@ export default function Home() {
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.1 }} variants={fadeUp} className="flex flex-col items-center text-center mb-10 sm:mb-16">
           <div className="p-3 bg-blue-50 dark:bg-blue-950/30 text-blue-500 rounded-2xl mb-4"><Cpu size={32} /></div>
           <h2 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tighter mb-4">Tech Arsenal & Tools</h2>
-          <p className="text-sm sm:text-base text-neutral-500 max-w-2xl">Kumpulan teknologi, bahasa pemrograman, dan alat yang biasa saya gunakan untuk merakit sistem dan memecahkan masalah.</p>
+          <p className="text-sm sm:text-base text-neutral-500 max-w-2xl">Review Alat Dan Skill Bahasa Pemrograman.</p>
         </motion.div>
 
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.1 }} variants={staggerContainer} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -632,7 +632,7 @@ export default function Home() {
                   </div>
                 ))}
                 <div className="flex items-center gap-1.5 sm:gap-2 mt-2">
-                  <span className="text-green-500 shrink-0">root@dalu-server:~$</span>
+                  <span className="text-green-500 shrink-0">root@proot:~$</span>
                   <input ref={terminalInputRef} type="text" value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyDown={handleTerminalCommand} className="flex-1 bg-transparent border-none outline-none text-white font-mono min-w-0" spellCheck="false" autoComplete="off" autoFocus />
                 </div>
                 <div ref={terminalEndRef} className="h-4 sm:h-0" />
