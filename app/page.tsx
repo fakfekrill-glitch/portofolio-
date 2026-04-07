@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion'; 
-import { MapPin, School, User, Mail, MessageSquare, ArrowRight, Camera, X, ZoomIn, Award, Home as HomeIcon, Briefcase, FileBadge, Image as ImageIcon, Phone, Terminal, Code, Cpu, ShieldAlert, Wrench, MoreVertical } from 'lucide-react';
+import { MapPin, School, User, Mail, MessageSquare, ArrowRight, Camera, X, ZoomIn, Award, Home as HomeIcon, Briefcase, FileBadge, Image as ImageIcon, Phone, Terminal, Code, Cpu, ShieldAlert, Wrench, MoreVertical, ExternalLink } from 'lucide-react';
 import Image from 'next/image';
 
 // --- CUSTOM BRAND ICONS ---
@@ -212,6 +212,18 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
     return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
+  // --- LOGIKA URL MUSIK ---
+  const getMusicUrl = () => {
+    if (!listeningDetails) return '#';
+    // Jika ada ID sinkronisasi Spotify, arahkan langsung ke aplikasinya
+    if (listeningDetails.sync_id) {
+      return `https://open.spotify.com/track/${listeningDetails.sync_id}`;
+    }
+    // Jika tidak ada (misal dari YouTube Music/PreMiD), cari judul dan artisnya di YouTube Music secara otomatis
+    const query = encodeURIComponent(`${listeningDetails.details || ''} ${listeningDetails.state || ''}`);
+    return `https://music.youtube.com/search?q=${query}`;
+  };
+
   return (
     <motion.div variants={fadeUp} className="col-span-1 sm:col-span-2 group relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#5865F2]/10 to-transparent border border-[#5865F2]/20 hover:border-[#5865F2]/50 transition-all duration-500 p-5 sm:p-6 shadow-sm hover:shadow-xl">
       <div className="absolute -right-10 -top-10 w-40 h-40 bg-[#5865F2]/10 rounded-full blur-3xl group-hover:bg-[#5865F2]/20 transition-all duration-500"></div>
@@ -236,20 +248,21 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
           <p className="text-xs sm:text-sm text-neutral-500 font-medium mb-2.5 truncate">@{discord_user.username}</p>
 
           {playbackActive && listeningDetails ? (
-            <div className="space-y-3 pt-1 border-t border-[#5865F2]/10">
+            // Bagian Pemutar Musik Khusus - SEKARANG BISA DI-KLIK!
+            <a href={getMusicUrl()} target="_blank" rel="noopener noreferrer" className="block space-y-3 pt-2 mt-2 border-t border-[#5865F2]/10 group/music cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-2 -mx-2 rounded-xl transition-colors relative">
               <div className="flex items-center gap-2 justify-between">
                 <p className="text-xs sm:text-sm font-semibold text-neutral-800 dark:text-neutral-200 truncate">Listening to {listeningDetails.name || "Music"}</p>
-                <MoreVertical size={16} className="text-neutral-500 dark:text-neutral-600 shrink-0" />
+                <ExternalLink size={14} className="text-neutral-400 group-hover/music:text-blue-500 transition-colors shrink-0" />
               </div>
               
               <div className="flex items-center gap-3">
                 {listeningDetails.assets?.large_image && (
-                  <div className="relative shrink-0 w-16 h-16 rounded-xl overflow-hidden border border-[#5865F2]/20">
+                  <div className="relative shrink-0 w-16 h-16 rounded-xl overflow-hidden border border-[#5865F2]/20 shadow-sm group-hover/music:shadow-md transition-shadow">
                     <img src={getAssetUrl(listeningDetails.application_id, listeningDetails.assets.large_image)} alt="Album Art" className="w-full h-full object-cover" />
                   </div>
                 )}
                 <div className="flex-1 overflow-hidden">
-                  <p className="text-lg sm:text-xl font-bold tracking-tight text-neutral-950 dark:text-white truncate">{listeningDetails.details || "Judul Lagu Tidak Diketahui"}</p>
+                  <p className="text-lg sm:text-xl font-bold tracking-tight text-neutral-950 dark:text-white truncate group-hover/music:text-blue-500 transition-colors">{listeningDetails.details || "Judul Lagu Tidak Diketahui"}</p>
                   <p className="text-xs sm:text-sm font-medium text-neutral-700 dark:text-neutral-300 truncate">{listeningDetails.state || "Artis Tidak Diketahui"}</p>
                   {listeningDetails.assets?.large_text && (
                     <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">{listeningDetails.assets.large_text}</p>
@@ -261,17 +274,16 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
                 <span>{formatMusicTime(currentMillis)}</span>
                 <div className="flex-1 relative h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
                   <div className="absolute inset-0 bg-neutral-300 dark:bg-neutral-700"></div>
-                  {/* BUGS FIXED: Ditambahkan (currentMillis || 0) agar TypeScript tidak protes null */}
                   <motion.div 
                     initial={{ width: 0 }} 
                     animate={{ width: totalMillis ? `${((currentMillis || 0) / totalMillis) * 100}%` : "0%" }} 
                     transition={{ duration: 1, ease: "linear" }}
-                    className="absolute top-0 left-0 h-full bg-neutral-900 dark:bg-white rounded-full" 
+                    className="absolute top-0 left-0 h-full bg-neutral-900 dark:bg-white group-hover/music:bg-blue-500 rounded-full transition-colors" 
                   />
                 </div>
                 <span>{formatMusicTime(totalMillis)}</span>
               </div>
-            </div>
+            </a>
           ) : activity ? (
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#5865F2]/10 border border-[#5865F2]/20 text-[#5865F2] text-xs sm:text-sm font-semibold max-w-full mt-1">
               <span className="truncate">{activity}</span>
@@ -335,6 +347,18 @@ export default function Home() {
   
   const terminalInputRef = useRef<HTMLInputElement>(null);
   const terminalEndRef = useRef<HTMLDivElement>(null);
+
+  // --- OPTIMISASI UX: Menutup modal dengan tombol Escape ---
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedImage(null);
+        setShowEasterEgg(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   useEffect(() => {
     fetch('/api/gallery')
