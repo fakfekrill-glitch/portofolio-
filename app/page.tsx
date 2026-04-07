@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-// TAMBAHAN: useScroll dan useSpring dari framer-motion untuk Scroll Progress Bar
 import { motion, AnimatePresence, Variants, useScroll, useSpring } from 'framer-motion'; 
-// TAMBAHAN: Icon 'Send' untuk tombol kirim pesan
 import { MapPin, School, User, Mail, MessageSquare, ArrowRight, Camera, X, ZoomIn, Award, Home as HomeIcon, Briefcase, FileBadge, Image as ImageIcon, Phone, Terminal, Code, Cpu, ShieldAlert, Wrench, MoreVertical, ExternalLink, Send } from 'lucide-react';
 import Image from 'next/image';
 
@@ -354,7 +352,7 @@ export default function Home() {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [formStatus, setFormStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
-  // --- 🔴 PASTE URL WEBHOOK DISCORD KAMU DI SINI 🔴 ---
+  // URL Webhook Discord aslimu
   const WEBHOOK_URL = "https://discord.com/api/webhooks/1491025432034938911/OtSYXYA22qqU0C6iAwUorgQ-Qg0SAcmzfdKwmgGMsVxHlOFIBN_6ikQ5Ftf_C3S0pHT-";
 
   // --- LOGIKA PROGRESS BAR SCROLL ---
@@ -436,11 +434,6 @@ export default function Home() {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.message) return;
-
-    if (WEBHOOK_URL === "TARUH_URL_WEBHOOK_DISCORD_KAMU_DISINI") {
-      alert("Oops! Kamu belum memasukkan URL Webhook Discord di dalam kodinganmu.");
-      return;
-    }
 
     setFormStatus('loading');
 
