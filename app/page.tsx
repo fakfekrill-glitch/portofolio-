@@ -60,13 +60,27 @@ const staggerContainer: Variants = { hidden: { opacity: 0 }, visible: { opacity:
 const modalVariant: Variants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { duration: 0.3 } }, exit: { opacity: 0, transition: { duration: 0.3, delay: 0.1 } } };
 const imageVariant: Variants = { hidden: { scale: 0.9, opacity: 0 }, visible: { scale: 1, opacity: 1, transition: { type: "spring", damping: 25, stiffness: 300 } }, exit: { scale: 0.9, opacity: 0, transition: { duration: 0.3 } } };
 
+// --- HELPER UNTUK MENGAMBIL ASSET GAMBAR DARI LANYARD ---
+const getAssetUrl = (appId: string, assetId: string) => {
+  if (!assetId) return 'https://cdn.discordapp.com/embed/avatars/0.png';
+  if (assetId.startsWith('spotify:')) {
+    return `https://i.scdn.co/image/${assetId.split(':')[1]}`;
+  }
+  if (assetId.startsWith('mp:external/')) {
+    return `https://media.discordapp.net/external/${assetId.replace('mp:external/', '')}`;
+  }
+  return `https://cdn.discordapp.com/app-assets/${appId}/${assetId}.png`;
+};
+
 // --- DISCORD PROFILE CARD (INSTANT WEBSOCKET REAL-TIME) ---
 const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, setData] = useState<any>(null);
   const [activity, setActivity] = useState<string | null>(null);
   const [currentMillis, setCurrentMillis] = useState<number | null>(null);
   const [totalMillis, setTotalMillis] = useState<number | null>(null);
   const [playbackActive, setPlaybackActive] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [listeningDetails, setListeningDetails] = useState<any>(null);
 
   useEffect(() => {
@@ -90,9 +104,13 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
             
             if (userData.activities && userData.activities.length > 0) {
               const acts = userData.activities;
-              const listening = acts.find((a: any) => a.type === 2 || a.name.toLowerCase().includes("music") || a.name.toLowerCase().includes("spotify") || (a.name.toLowerCase() === "youtube music" && a.type === 0)); // Menambahkan deteksi YouTube Music (biasanya type 0)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const listening = acts.find((a: any) => a.type === 2 || a.name.toLowerCase().includes("music") || a.name.toLowerCase().includes("spotify") || (a.name.toLowerCase() === "youtube music" && a.type === 0));
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const watching = acts.find((a: any) => a.type === 3 || (a.name.toLowerCase().includes("youtube") && !a.name.toLowerCase().includes("music")) || a.name.toLowerCase().includes("netflix"));
-              const playing = acts.find((a: any) => a.type === 0 && a.name.toLowerCase() !== "youtube music"); // Kecualikan YouTube Music dari type 0
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const playing = acts.find((a: any) => a.type === 0 && a.name.toLowerCase() !== "youtube music");
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const customStatus = acts.find((a: any) => a.type === 4);
 
               if (listening) {
@@ -107,7 +125,6 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
                   const endUnix = listening.timestamps.end;
                   const durationMillis = endUnix - startUnix;
                   setTotalMillis(durationMillis);
-                  // Simpan stempel waktu Unix asli untuk efek progres sisi klien
                   listening.startUnix = startUnix;
                   listening.endUnix = endUnix;
                 } else {
@@ -151,7 +168,6 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
     };
   }, [discordId]);
 
-  // Efek untuk memperbarui progres klien secara real-time
   useEffect(() => {
     if (!playbackActive || !listeningDetails?.startUnix || !totalMillis) {
       setCurrentMillis(null);
@@ -159,17 +175,15 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
     }
 
     const startUnix = listeningDetails.startUnix;
-    // const endUnix = listeningDetails.endUnix; // endUnix juga tersedia
 
     const updateProgress = () => {
       const now = Date.now();
-      // Lanyard mengembalikan stempel waktu Unix dalam milidetik.
       const currentPos = Math.max(0, Math.min(totalMillis, now - startUnix));
       setCurrentMillis(currentPos);
     };
 
-    updateProgress(); // Jalankan sekali segera
-    const intervalId = setInterval(updateProgress, 1000); // Perbarui setiap detik
+    updateProgress();
+    const intervalId = setInterval(updateProgress, 1000);
 
     return () => clearInterval(intervalId);
   }, [playbackActive, listeningDetails, totalMillis]);
@@ -190,7 +204,6 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
   
   const currentStatus = statusConfig[discord_status as keyof typeof statusConfig] || statusConfig.offline;
 
-  // Helper untuk memformat waktu musik MM:SS
   const formatMusicTime = (millis: number | null): string => {
     if (millis === null) return "00:00";
     const seconds = Math.floor(millis / 1000);
@@ -204,7 +217,7 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
       <div className="absolute -right-10 -top-10 w-40 h-40 bg-[#5865F2]/10 rounded-full blur-3xl group-hover:bg-[#5865F2]/20 transition-all duration-500"></div>
       
       <div className="flex items-start gap-4 sm:gap-6 relative z-10">
-        <div className="relative shrink-0 pt-1"> {/* Sedikit padding atas untuk keseimbangan visual */}
+        <div className="relative shrink-0 pt-1">
           <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-[#5865F2]/30 group-hover:border-[#5865F2] transition-colors">
             <img src={avatarUrl} alt="Discord Avatar" className="w-full h-full object-cover" />
           </div>
@@ -223,19 +236,16 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
           <p className="text-xs sm:text-sm text-neutral-500 font-medium mb-2.5 truncate">@{discord_user.username}</p>
 
           {playbackActive && listeningDetails ? (
-            // Bagian Pemutar Musik Khusus (YouTube Music)
             <div className="space-y-3 pt-1 border-t border-[#5865F2]/10">
-              {/* Header Status Musik */}
               <div className="flex items-center gap-2 justify-between">
-                <p className="text-xs sm:text-sm font-semibold text-neutral-800 dark:text-neutral-200 truncate">Listening to YouTube Music</p>
+                <p className="text-xs sm:text-sm font-semibold text-neutral-800 dark:text-neutral-200 truncate">Listening to {listeningDetails.name || "Music"}</p>
                 <MoreVertical size={16} className="text-neutral-500 dark:text-neutral-600 shrink-0" />
               </div>
               
-              {/* Detail Lagu */}
               <div className="flex items-center gap-3">
                 {listeningDetails.assets?.large_image && (
                   <div className="relative shrink-0 w-16 h-16 rounded-xl overflow-hidden border border-[#5865F2]/20">
-                    <Image src={`https://cdn.discordapp.com/app-assets/${listeningDetails.application_id}/${listeningDetails.assets.large_image}.png`} alt="Album Art" fill className="object-cover" sizes="64px" />
+                    <img src={getAssetUrl(listeningDetails.application_id, listeningDetails.assets.large_image)} alt="Album Art" className="w-full h-full object-cover" />
                   </div>
                 )}
                 <div className="flex-1 overflow-hidden">
@@ -247,23 +257,22 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
                 </div>
               </div>
               
-              {/* Timeline Progres */}
               <div className="flex items-center gap-3 pt-1.5 font-mono text-xs sm:text-sm text-neutral-600 dark:text-neutral-400">
                 <span>{formatMusicTime(currentMillis)}</span>
                 <div className="flex-1 relative h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
-                  <div className="absolute inset-0 bg-neutral-300 dark:bg-neutral-700"></div> {/* Bilah latar belakang solid */}
+                  <div className="absolute inset-0 bg-neutral-300 dark:bg-neutral-700"></div>
+                  {/* BUGS FIXED: Ditambahkan (currentMillis || 0) agar TypeScript tidak protes null */}
                   <motion.div 
                     initial={{ width: 0 }} 
-                    animate={{ width: totalMillis ? `${(currentMillis / totalMillis) * 100}%` : 0 }} 
+                    animate={{ width: totalMillis ? `${((currentMillis || 0) / totalMillis) * 100}%` : "0%" }} 
                     transition={{ duration: 1, ease: "linear" }}
                     className="absolute top-0 left-0 h-full bg-neutral-900 dark:bg-white rounded-full" 
-                  /> {/* Bilah progres solid putih/hitam */}
+                  />
                 </div>
                 <span>{formatMusicTime(totalMillis)}</span>
               </div>
             </div>
           ) : activity ? (
-            // Bagian Aktivitas Normal
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#5865F2]/10 border border-[#5865F2]/20 text-[#5865F2] text-xs sm:text-sm font-semibold max-w-full mt-1">
               <span className="truncate">{activity}</span>
               <span className="relative flex h-2 w-2 shrink-0">
@@ -281,7 +290,15 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
 };
 
 // --- KOMPONEN KARTU SOSIAL BIASA ---
-const SocialCard = ({ icon: Icon, label, value, href, isSuspended = false }: any) => (
+interface SocialCardProps {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  href: string;
+  isSuspended?: boolean;
+}
+
+const SocialCard = ({ icon: Icon, label, value, href, isSuspended = false }: SocialCardProps) => (
   <motion.a 
     href={href} target="_blank" rel="noopener noreferrer" variants={fadeUp}
     className={`group flex items-center gap-3 sm:gap-4 p-4 md:p-5 rounded-2xl border transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-1 
@@ -306,7 +323,7 @@ const SocialCard = ({ icon: Icon, label, value, href, isSuspended = false }: any
 export default function Home() {
   const [photos, setPhotos] = useState<string[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [currentTime, setCurrentTime] = useState<string>('');
+  const [currentTime, setCurrentTime] = useState<string>('Memuat...');
 
   const [clickCount, setClickCount] = useState(0);
   const [showEasterEgg, setShowEasterEgg] = useState(false);
@@ -341,7 +358,10 @@ export default function Home() {
       document.body.style.overflow = 'hidden';
       if (showEasterEgg) setTimeout(() => terminalInputRef.current?.focus(), 500);
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
     }
   }, [selectedImage, showEasterEgg]);
 
@@ -371,7 +391,7 @@ export default function Home() {
     setTimeout(() => setClickCount(0), 3000);
   };
 
-  // --- LOGIKA MESIN TERMINAL (DIPERBAIKI ANTI-BLOKIR) ---
+  // --- LOGIKA MESIN TERMINAL ---
   const handleTerminalCommand = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       const fullCmd = inputValue.trim().toLowerCase();
@@ -408,7 +428,6 @@ export default function Home() {
             let ipToScan = target;
             const isIp = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(target);
             
-            // Kalau yang diketik domain (misal github.com), resolve dulu jadi IP via Google DNS
             if (!isIp) {
               setTerminalHistory(prev => [...prev, { type: 'system', text: `Resolving domain ${target}...` }]);
               const dnsRes = await fetch(`https://dns.google/resolve?name=${target}&type=A`);
@@ -421,7 +440,6 @@ export default function Home() {
               }
             }
 
-            // Tarik data intelijen pakai API yang aman (ipwho.is)
             setTerminalHistory(prev => [...prev, { type: 'system', text: `Extracting geolocation and ISP data for ${ipToScan}...` }]);
             const osintRes = await fetch(`https://ipwho.is/${ipToScan}`);
             const osintData = await osintRes.json();
@@ -442,6 +460,7 @@ export default function Home() {
               { type: 'output', text: '-----------------------------------------' }
             ]);
 
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } catch (err: any) {
             setTerminalHistory(prev => [...prev, { type: 'error', text: `OSINT Scan Failed: ${err.message}` }]);
           }
@@ -465,7 +484,6 @@ export default function Home() {
             else if (ua.includes("Edg")) browser = "Edge";
             else if (ua.includes("OPR") || ua.includes("Opera")) browser = "Opera";
 
-            // Pake API ipwho.is yang anti-blokir buat cari info visitor aslinya
             const res = await fetch('https://ipwho.is/');
             const data = await res.json();
             
