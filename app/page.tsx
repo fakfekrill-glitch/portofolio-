@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion'; 
-import { MapPin, School, User, Mail, MessageSquare, ArrowRight, Camera, X, ZoomIn, Award, Home as HomeIcon, Briefcase, FileBadge, Image as ImageIcon, Phone, Terminal, Code, Cpu, ShieldAlert, Wrench } from 'lucide-react';
+import { MapPin, School, User, Mail, MessageSquare, ArrowRight, Camera, X, ZoomIn, Award, Home as HomeIcon, Briefcase, FileBadge, Image as ImageIcon, Phone, Terminal, Code, Cpu, ShieldAlert, Wrench, MoreVertical } from 'lucide-react';
 import Image from 'next/image';
 
 // --- CUSTOM BRAND ICONS ---
@@ -31,7 +31,7 @@ const personalInfo = {
   origin: "Surabaya, Indonesia",
   email: "dalu.raziq45@sma.belajar.id", 
   discord: "pushygamertag27",      
-  instagram: "rzq.punk",       
+  instagram: "rzq.punk",        
   facebook: "Pushy",
   facebookLink: "https://www.facebook.com/share/1JBvzZ7Nq5/",
   githubMain: "dhritzz",
@@ -64,6 +64,10 @@ const imageVariant: Variants = { hidden: { scale: 0.9, opacity: 0 }, visible: { 
 const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
   const [data, setData] = useState<any>(null);
   const [activity, setActivity] = useState<string | null>(null);
+  const [currentMillis, setCurrentMillis] = useState<number | null>(null);
+  const [totalMillis, setTotalMillis] = useState<number | null>(null);
+  const [playbackActive, setPlaybackActive] = useState(false);
+  const [listeningDetails, setListeningDetails] = useState<any>(null);
 
   useEffect(() => {
     let ws: WebSocket;
@@ -86,29 +90,49 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
             
             if (userData.activities && userData.activities.length > 0) {
               const acts = userData.activities;
-              const listening = acts.find((a: any) => a.type === 2 || a.name.toLowerCase().includes("music") || a.name.toLowerCase().includes("spotify"));
+              const listening = acts.find((a: any) => a.type === 2 || a.name.toLowerCase().includes("music") || a.name.toLowerCase().includes("spotify") || (a.name.toLowerCase() === "youtube music" && a.type === 0)); // Menambahkan deteksi YouTube Music (biasanya type 0)
               const watching = acts.find((a: any) => a.type === 3 || (a.name.toLowerCase().includes("youtube") && !a.name.toLowerCase().includes("music")) || a.name.toLowerCase().includes("netflix"));
-              const playing = acts.find((a: any) => a.type === 0);
+              const playing = acts.find((a: any) => a.type === 0 && a.name.toLowerCase() !== "youtube music"); // Kecualikan YouTube Music dari type 0
               const customStatus = acts.find((a: any) => a.type === 4);
 
               if (listening) {
                 const song = listening.details || listening.name;
                 const artist = listening.state ? ` - ${listening.state}` : '';
                 setActivity(`🎵 Listening: ${song}${artist}`);
+                setListeningDetails(listening);
+
+                if (listening.timestamps && listening.timestamps.start && listening.timestamps.end) {
+                  setPlaybackActive(true);
+                  const startUnix = listening.timestamps.start;
+                  const endUnix = listening.timestamps.end;
+                  const durationMillis = endUnix - startUnix;
+                  setTotalMillis(durationMillis);
+                  // Simpan stempel waktu Unix asli untuk efek progres sisi klien
+                  listening.startUnix = startUnix;
+                  listening.endUnix = endUnix;
+                } else {
+                  setPlaybackActive(false);
+                  setTotalMillis(null);
+                }
               } else if (watching) {
                 const title = watching.details || watching.name;
                 const state = watching.state ? ` - ${watching.state}` : '';
                 setActivity(`▶️ Watching: ${title}${state}`);
+                setPlaybackActive(false);
               } else if (playing) {
                 const details = playing.details ? ` - ${playing.details}` : '';
                 setActivity(`🎮 Playing: ${playing.name}${details}`);
+                setPlaybackActive(false);
               } else if (customStatus && customStatus.state) {
                 setActivity(`💬 ${customStatus.state}`);
+                setPlaybackActive(false);
               } else {
                 setActivity(`✨ Active: ${acts[0].name}`);
+                setPlaybackActive(false);
               }
             } else {
               setActivity(null);
+              setPlaybackActive(false);
             }
           }
         }
@@ -127,6 +151,29 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
     };
   }, [discordId]);
 
+  // Efek untuk memperbarui progres klien secara real-time
+  useEffect(() => {
+    if (!playbackActive || !listeningDetails?.startUnix || !totalMillis) {
+      setCurrentMillis(null);
+      return;
+    }
+
+    const startUnix = listeningDetails.startUnix;
+    // const endUnix = listeningDetails.endUnix; // endUnix juga tersedia
+
+    const updateProgress = () => {
+      const now = Date.now();
+      // Lanyard mengembalikan stempel waktu Unix dalam milidetik.
+      const currentPos = Math.max(0, Math.min(totalMillis, now - startUnix));
+      setCurrentMillis(currentPos);
+    };
+
+    updateProgress(); // Jalankan sekali segera
+    const intervalId = setInterval(updateProgress, 1000); // Perbarui setiap detik
+
+    return () => clearInterval(intervalId);
+  }, [playbackActive, listeningDetails, totalMillis]);
+
   if (!data) return null;
 
   const { discord_user, discord_status } = data;
@@ -143,12 +190,21 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
   
   const currentStatus = statusConfig[discord_status as keyof typeof statusConfig] || statusConfig.offline;
 
+  // Helper untuk memformat waktu musik MM:SS
+  const formatMusicTime = (millis: number | null): string => {
+    if (millis === null) return "00:00";
+    const seconds = Math.floor(millis / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
   return (
     <motion.div variants={fadeUp} className="col-span-1 sm:col-span-2 group relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#5865F2]/10 to-transparent border border-[#5865F2]/20 hover:border-[#5865F2]/50 transition-all duration-500 p-5 sm:p-6 shadow-sm hover:shadow-xl">
       <div className="absolute -right-10 -top-10 w-40 h-40 bg-[#5865F2]/10 rounded-full blur-3xl group-hover:bg-[#5865F2]/20 transition-all duration-500"></div>
       
-      <div className="flex items-center gap-4 sm:gap-6 relative z-10">
-        <div className="relative shrink-0">
+      <div className="flex items-start gap-4 sm:gap-6 relative z-10">
+        <div className="relative shrink-0 pt-1"> {/* Sedikit padding atas untuk keseimbangan visual */}
           <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-[#5865F2]/30 group-hover:border-[#5865F2] transition-colors">
             <img src={avatarUrl} alt="Discord Avatar" className="w-full h-full object-cover" />
           </div>
@@ -164,10 +220,51 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
               {currentStatus.text}
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-neutral-500 font-medium mb-2 truncate">@{discord_user.username}</p>
+          <p className="text-xs sm:text-sm text-neutral-500 font-medium mb-2.5 truncate">@{discord_user.username}</p>
 
-          {activity ? (
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#5865F2]/10 border border-[#5865F2]/20 text-[#5865F2] text-xs sm:text-sm font-semibold max-w-full">
+          {playbackActive && listeningDetails ? (
+            // Bagian Pemutar Musik Khusus (YouTube Music)
+            <div className="space-y-3 pt-1 border-t border-[#5865F2]/10">
+              {/* Header Status Musik */}
+              <div className="flex items-center gap-2 justify-between">
+                <p className="text-xs sm:text-sm font-semibold text-neutral-800 dark:text-neutral-200 truncate">Listening to YouTube Music</p>
+                <MoreVertical size={16} className="text-neutral-500 dark:text-neutral-600 shrink-0" />
+              </div>
+              
+              {/* Detail Lagu */}
+              <div className="flex items-center gap-3">
+                {listeningDetails.assets?.large_image && (
+                  <div className="relative shrink-0 w-16 h-16 rounded-xl overflow-hidden border border-[#5865F2]/20">
+                    <Image src={`https://cdn.discordapp.com/app-assets/${listeningDetails.application_id}/${listeningDetails.assets.large_image}.png`} alt="Album Art" fill className="object-cover" sizes="64px" />
+                  </div>
+                )}
+                <div className="flex-1 overflow-hidden">
+                  <p className="text-lg sm:text-xl font-bold tracking-tight text-neutral-950 dark:text-white truncate">{listeningDetails.details || "Judul Lagu Tidak Diketahui"}</p>
+                  <p className="text-xs sm:text-sm font-medium text-neutral-700 dark:text-neutral-300 truncate">{listeningDetails.state || "Artis Tidak Diketahui"}</p>
+                  {listeningDetails.assets?.large_text && (
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">{listeningDetails.assets.large_text}</p>
+                  )}
+                </div>
+              </div>
+              
+              {/* Timeline Progres */}
+              <div className="flex items-center gap-3 pt-1.5 font-mono text-xs sm:text-sm text-neutral-600 dark:text-neutral-400">
+                <span>{formatMusicTime(currentMillis)}</span>
+                <div className="flex-1 relative h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
+                  <div className="absolute inset-0 bg-neutral-300 dark:bg-neutral-700"></div> {/* Bilah latar belakang solid */}
+                  <motion.div 
+                    initial={{ width: 0 }} 
+                    animate={{ width: totalMillis ? `${(currentMillis / totalMillis) * 100}%` : 0 }} 
+                    transition={{ duration: 1, ease: "linear" }}
+                    className="absolute top-0 left-0 h-full bg-neutral-900 dark:bg-white rounded-full" 
+                  /> {/* Bilah progres solid putih/hitam */}
+                </div>
+                <span>{formatMusicTime(totalMillis)}</span>
+              </div>
+            </div>
+          ) : activity ? (
+            // Bagian Aktivitas Normal
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#5865F2]/10 border border-[#5865F2]/20 text-[#5865F2] text-xs sm:text-sm font-semibold max-w-full mt-1">
               <span className="truncate">{activity}</span>
               <span className="relative flex h-2 w-2 shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#5865F2] opacity-75"></span>
@@ -175,7 +272,7 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
               </span>
             </div>
           ) : (
-            <p className="text-xs text-neutral-400 italic truncate">Sedang tidak memutar game/lagu</p>
+            <p className="text-xs text-neutral-400 italic truncate mt-1">Sedang tidak memutar game/lagu</p>
           )}
         </div>
       </div>
