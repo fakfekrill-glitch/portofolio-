@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, Variants } from 'framer-motion'; 
-import { MapPin, School, User, Mail, MessageSquare, ArrowRight, Camera, X, ZoomIn, Award, Home as HomeIcon, Briefcase, FileBadge, Image as ImageIcon, Phone, Terminal, Code, Cpu, ShieldAlert, Wrench, MoreVertical, ExternalLink } from 'lucide-react';
+// TAMBAHAN: useScroll dan useSpring dari framer-motion untuk Scroll Progress Bar
+import { motion, AnimatePresence, Variants, useScroll, useSpring } from 'framer-motion'; 
+// TAMBAHAN: Icon 'Send' untuk tombol kirim pesan
+import { MapPin, School, User, Mail, MessageSquare, ArrowRight, Camera, X, ZoomIn, Award, Home as HomeIcon, Briefcase, FileBadge, Image as ImageIcon, Phone, Terminal, Code, Cpu, ShieldAlert, Wrench, MoreVertical, ExternalLink, Send } from 'lucide-react';
 import Image from 'next/image';
 
 // --- CUSTOM BRAND ICONS ---
@@ -248,7 +250,7 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
           <p className="text-xs sm:text-sm text-neutral-500 font-medium mb-2.5 truncate">@{discord_user.username}</p>
 
           {playbackActive && listeningDetails ? (
-            // Bagian Pemutar Musik Khusus - SEKARANG BISA DI-KLIK!
+            // Bagian Pemutar Musik Khusus - BISA DI-KLIK!
             <a href={getMusicUrl()} target="_blank" rel="noopener noreferrer" className="block space-y-3 pt-2 mt-2 border-t border-[#5865F2]/10 group/music cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-2 -mx-2 rounded-xl transition-colors relative">
               <div className="flex items-center gap-2 justify-between">
                 <p className="text-xs sm:text-sm font-semibold text-neutral-800 dark:text-neutral-200 truncate">Listening to {listeningDetails.name || "Music"}</p>
@@ -348,6 +350,21 @@ export default function Home() {
   const terminalInputRef = useRef<HTMLInputElement>(null);
   const terminalEndRef = useRef<HTMLDivElement>(null);
 
+  // --- STATE UNTUK FORM WEBHOOK ---
+  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+  const [formStatus, setFormStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+
+  // --- 🔴 PASTE URL WEBHOOK DISCORD KAMU DI SINI 🔴 ---
+  const WEBHOOK_URL = "https://discord.com/api/webhooks/1491025432034938911/OtSYXYA22qqU0C6iAwUorgQ-Qg0SAcmzfdKwmgGMsVxHlOFIBN_6ikQ5Ftf_C3S0pHT-";
+
+  // --- LOGIKA PROGRESS BAR SCROLL ---
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
+
   // --- OPTIMISASI UX: Menutup modal dengan tombol Escape ---
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -413,6 +430,53 @@ export default function Home() {
       setClickCount(0);
     }
     setTimeout(() => setClickCount(0), 3000);
+  };
+
+  // --- LOGIKA MENGIRIM PESAN KE DISCORD WEBHOOK ---
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.email || !formData.message) return;
+
+    if (WEBHOOK_URL === "TARUH_URL_WEBHOOK_DISCORD_KAMU_DISINI") {
+      alert("Oops! Kamu belum memasukkan URL Webhook Discord di dalam kodinganmu.");
+      return;
+    }
+
+    setFormStatus('loading');
+
+    try {
+      const response = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: "Portfolio Bot",
+          avatar_url: "https://cdn-icons-png.flaticon.com/512/4782/4782472.png", // Ikon surat
+          embeds: [{
+            title: "📨 Pesan Baru dari Portofolio!",
+            description: "Seseorang telah mengirim pesan lewat form kontak di website portofoliomu.",
+            color: 3447003, // Warna Biru (Hex: #3498db)
+            fields: [
+              { name: "👤 Nama", value: formData.name, inline: true },
+              { name: "📧 Email", value: formData.email, inline: true },
+              { name: "💬 Pesan", value: formData.message }
+            ],
+            footer: { text: "Dikirim dari Vercel Server" },
+            timestamp: new Date().toISOString()
+          }]
+        })
+      });
+
+      if (response.ok) {
+        setFormStatus('success');
+        setFormData({ name: '', email: '', message: '' });
+        setTimeout(() => setFormStatus('idle'), 5000);
+      } else {
+        throw new Error('Gagal mengirim');
+      }
+    } catch (error) {
+      setFormStatus('error');
+      setTimeout(() => setFormStatus('idle'), 5000);
+    }
   };
 
   // --- LOGIKA MESIN TERMINAL ---
@@ -568,6 +632,12 @@ export default function Home() {
   return (
     <div className="min-h-screen pt-20 md:pt-32 pb-32 overflow-hidden relative">
       
+      {/* --- SCROLL PROGRESS BAR --- */}
+      <motion.div
+        className="fixed top-0 left-0 right-0 h-1.5 sm:h-2 bg-gradient-to-r from-blue-600 to-cyan-400 z-50 origin-left"
+        style={{ scaleX }}
+      />
+
       {/* --- FLOATING NAVIGATION DOCK --- */}
       <motion.nav 
         initial={{ y: 100, opacity: 0 }}
@@ -763,15 +833,48 @@ export default function Home() {
         )}
       </section>
 
-      {/* --- FOOTER (CONTACT & SOCIAL MEDIA) --- */}
+      {/* --- FOOTER (CONTACT & SOCIAL MEDIA WITH WEBHOOK FORM) --- */}
       <footer id="contact" className="max-w-7xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 md:pt-20 pb-16 sm:pb-24 lg:pb-16 border-t dark:border-neutral-800">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.1 }} variants={staggerContainer} className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 lg:gap-16 items-start">
-          <motion.div variants={fadeUp} className="lg:col-span-5 space-y-3 sm:space-y-4 md:space-y-6 text-center lg:text-left">
-            <h2 className="text-3xl sm:text-5xl md:text-7xl font-black tracking-tighter leading-none">Found <br className="hidden lg:block"/> Me On</h2>
-            <p className="text-sm sm:text-base md:text-xl text-neutral-600 dark:text-neutral-400 max-w-xl mx-auto lg:mx-0">Silakan Hubungi Saya Jika Bertanya Sesuatu.</p>
+          
+          <motion.div variants={fadeUp} className="lg:col-span-5 flex flex-col h-full">
+            <div className="text-center lg:text-left mb-8">
+              <h2 className="text-3xl sm:text-5xl md:text-7xl font-black tracking-tighter leading-none mb-3 sm:mb-4 md:mb-6">Kirim <br className="hidden lg:block"/> Pesan</h2>
+              <p className="text-sm sm:text-base md:text-lg text-neutral-600 dark:text-neutral-400">Pesan yang dikirim dari sini akan langsung masuk ke server Discord pribadiku. Coba saja!</p>
+            </div>
+
+            {/* --- FORM DISCORD WEBHOOK --- */}
+            <form onSubmit={handleSendMessage} className="space-y-4 flex-1">
+              <div className="space-y-4">
+                <input 
+                  type="text" placeholder="Nama Kamu" required 
+                  className="w-full px-4 py-3 rounded-xl bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm" 
+                  value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} 
+                />
+                <input 
+                  type="email" placeholder="Email Kamu" required 
+                  className="w-full px-4 py-3 rounded-xl bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm" 
+                  value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} 
+                />
+                <textarea 
+                  placeholder="Isi pesan, tawaran proyek, atau sapaan hangat..." required rows={4} 
+                  className="w-full px-4 py-3 rounded-xl bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm resize-none" 
+                  value={formData.message} onChange={e => setFormData({...formData, message: e.target.value})} 
+                />
+              </div>
+              <button 
+                type="submit" disabled={formStatus === 'loading'} 
+                className="w-full py-3.5 rounded-xl bg-neutral-950 dark:bg-white text-white dark:text-black font-bold transition-all disabled:opacity-50 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 shadow-lg"
+              >
+                {formStatus === 'loading' ? 'Mengirim Data...' : 
+                 formStatus === 'success' ? 'Terkirim! ✅' : 
+                 formStatus === 'error' ? 'Gagal Terkirim ❌' : 
+                 <><Send size={18} /> Kirim via Webhook</>}
+              </button>
+            </form>
           </motion.div>
 
-          <motion.div variants={staggerContainer} className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+          <motion.div variants={staggerContainer} className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6 mt-8 lg:mt-0">
             <DiscordProfileCard discordId="582206666431266816" />
             <SocialCard icon={Mail} label="Kirim Email" value={personalInfo.email} href={`mailto:${personalInfo.email}`} />
             <SocialCard icon={CustomInstagram} label="Instagram" value={`@${personalInfo.instagram}`} href={`https://instagram.com/${personalInfo.instagram}`} />
@@ -780,10 +883,11 @@ export default function Home() {
             <SocialCard icon={CustomGithub} label="GitHub (Suspended)" value={`@${personalInfo.githubSuspended}`} href={`https://github.com/${personalInfo.githubSuspended}`} isSuspended={true} />
             <SocialCard icon={CustomSteam} label="Steam Profile" value="Sagiri" href={personalInfo.steamLink} />
           </motion.div>
+
         </motion.div>
 
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: false }} variants={fadeUp} className="text-center pt-12 sm:pt-16 md:pt-24 mt-10 sm:mt-12 md:mt-16">
-          <p className="text-[10px] sm:text-xs md:text-sm text-neutral-500">© {new Date().getFullYear()} {personalInfo.fullName}. All rights reserved. Made with ❤️ in Surabaya.</p>
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: false }} variants={fadeUp} className="text-center pt-12 sm:pt-16 md:pt-24 mt-10 sm:mt-12 md:mt-16 border-t dark:border-neutral-800">
+          <p className="text-[10px] sm:text-xs md:text-sm text-neutral-500 font-medium">© {new Date().getFullYear()} {personalInfo.fullName}. All rights reserved. Made with ❤️ in Surabaya.</p>
         </motion.div>
       </footer>
 
