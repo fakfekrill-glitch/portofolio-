@@ -215,11 +215,9 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
   // --- LOGIKA URL MUSIK ---
   const getMusicUrl = () => {
     if (!listeningDetails) return '#';
-    // Jika ada ID sinkronisasi Spotify, arahkan langsung ke aplikasinya
     if (listeningDetails.sync_id) {
       return `https://open.spotify.com/track/${listeningDetails.sync_id}`;
     }
-    // Jika tidak ada (misal dari YouTube Music/PreMiD), cari judul dan artisnya di YouTube Music secara otomatis
     const query = encodeURIComponent(`${listeningDetails.details || ''} ${listeningDetails.state || ''}`);
     return `https://music.youtube.com/search?q=${query}`;
   };
@@ -248,7 +246,6 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
           <p className="text-xs sm:text-sm text-neutral-500 font-medium mb-2.5 truncate">@{discord_user.username}</p>
 
           {playbackActive && listeningDetails ? (
-            // Bagian Pemutar Musik Khusus - BISA DI-KLIK!
             <a href={getMusicUrl()} target="_blank" rel="noopener noreferrer" className="block space-y-3 pt-2 mt-2 border-t border-[#5865F2]/10 group/music cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-2 -mx-2 rounded-xl transition-colors relative">
               <div className="flex items-center gap-2 justify-between">
                 <p className="text-xs sm:text-sm font-semibold text-neutral-800 dark:text-neutral-200 truncate">Listening to {listeningDetails.name || "Music"}</p>
@@ -352,9 +349,6 @@ export default function Home() {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [formStatus, setFormStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
-  // URL Webhook Discord aslimu
-  const WEBHOOK_URL = "https://discord.com/api/webhooks/1491025432034938911/OtSYXYA22qqU0C6iAwUorgQ-Qg0SAcmzfdKwmgGMsVxHlOFIBN_6ikQ5Ftf_C3S0pHT-";
-
   // --- LOGIKA PROGRESS BAR SCROLL ---
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
@@ -430,7 +424,7 @@ export default function Home() {
     setTimeout(() => setClickCount(0), 3000);
   };
 
-  // --- LOGIKA MENGIRIM PESAN KE DISCORD WEBHOOK ---
+  // --- LOGIKA MENGIRIM PESAN LEWAT API ROUTE YANG AMAN ---
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.message) return;
@@ -438,24 +432,14 @@ export default function Home() {
     setFormStatus('loading');
 
     try {
-      const response = await fetch(WEBHOOK_URL, {
+      // Kita kirim data ke API buatan kita sendiri (/api/gallery), BUKAN ke Discord langsung
+      const response = await fetch('/api/gallery', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          username: "Portfolio Bot",
-          avatar_url: "https://cdn-icons-png.flaticon.com/512/4782/4782472.png", // Ikon surat
-          embeds: [{
-            title: "📨 Pesan Baru dari Portofolio!",
-            description: "Seseorang telah mengirim pesan lewat form kontak di website portofoliomu.",
-            color: 3447003, // Warna Biru (Hex: #3498db)
-            fields: [
-              { name: "👤 Nama", value: formData.name, inline: true },
-              { name: "📧 Email", value: formData.email, inline: true },
-              { name: "💬 Pesan", value: formData.message }
-            ],
-            footer: { text: "Dikirim dari Vercel Server" },
-            timestamp: new Date().toISOString()
-          }]
+          name: formData.name,
+          email: formData.email,
+          message: formData.message
         })
       });
 
