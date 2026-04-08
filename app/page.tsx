@@ -5,7 +5,6 @@ import { motion, AnimatePresence, Variants, useScroll, useSpring } from 'framer-
 import { MapPin, School, User, Mail, MessageSquare, ArrowRight, Camera, X, ZoomIn, Award, Home as HomeIcon, Briefcase, FileBadge, Image as ImageIcon, Phone, Terminal, Code, Cpu, ShieldAlert, Wrench, MoreVertical, ExternalLink, Send } from 'lucide-react';
 import Image from 'next/image';
 
-// --- CUSTOM BRAND ICONS ---
 const CustomInstagram = ({ size = 24 }: { size?: number }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line></svg>
 );
@@ -19,7 +18,6 @@ const CustomSteam = ({ size = 24 }: { size?: number }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M12.001 0C5.373 0 .001 5.373.001 12c0 4.965 3.02 9.213 7.377 11.02l3.435-4.945c-.114-.347-.174-.72-.174-1.107 0-1.966 1.595-3.56 3.56-3.56.362 0 .71.06 1.038.16l3.456-2.467c.023-.122.036-.247.036-.374 0-1.774-1.438-3.213-3.212-3.213-1.774 0-3.213 1.44-3.213 3.213 0 .29.045.57.12.834L8.88 14.35a3.57 3.57 0 0 0-4.126-.724L2.3 17.152A11.95 11.95 0 0 1 .001 12C.001 5.373 5.373 0 12.001 0Zm3.56 10.574c-1.18 0-2.136.956-2.136 2.136 0 1.18.956 2.136 2.136 2.136 1.18 0 2.136-.956 2.136-2.136 0-1.18-.956-2.136-2.136-2.136Zm0 3.388c-.69 0-1.252-.56-1.252-1.252 0-.69.56-1.252 1.252-1.252.69 0 1.252.56 1.252 1.252 0 .69-.562 1.252-1.252 1.252ZM5.987 14.79c-.615 0-1.132.426-1.256.998L3.24 15.26c-.014-.085-.022-.172-.022-.258 0-.927.75-1.677 1.677-1.677.927 0 1.678.75 1.678 1.677 0 .093-.01.186-.026.276l-1.423.41a1.297 1.297 0 0 1 .862-1.304Zm2.228 2.264c.294.767.102 1.645-.55 2.203-.657.563-1.61.632-2.344.175L2.846 20.31a2.696 2.696 0 0 0 3.894-3.24l1.475-.014Z"/></svg>
 );
 
-// --- DATA PERSONAL ---
 const personalInfo = {
   firstName: "DALU",
   lastName: "RAZIQ",
@@ -60,7 +58,6 @@ const staggerContainer: Variants = { hidden: { opacity: 0 }, visible: { opacity:
 const modalVariant: Variants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { duration: 0.3 } }, exit: { opacity: 0, transition: { duration: 0.3, delay: 0.1 } } };
 const imageVariant: Variants = { hidden: { scale: 0.9, opacity: 0 }, visible: { scale: 1, opacity: 1, transition: { type: "spring", damping: 25, stiffness: 300 } }, exit: { scale: 0.9, opacity: 0, transition: { duration: 0.3 } } };
 
-// --- HELPER UNTUK MENGAMBIL ASSET GAMBAR DARI LANYARD ---
 const getAssetUrl = (appId: string, assetId: string) => {
   if (!assetId) return 'https://cdn.discordapp.com/embed/avatars/0.png';
   if (assetId.startsWith('spotify:')) {
@@ -72,7 +69,6 @@ const getAssetUrl = (appId: string, assetId: string) => {
   return `https://cdn.discordapp.com/app-assets/${appId}/${assetId}.png`;
 };
 
-// --- DISCORD PROFILE CARD (INSTANT WEBSOCKET REAL-TIME) ---
 const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, setData] = useState<any>(null);
@@ -297,7 +293,6 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
   );
 };
 
-// --- KOMPONEN KARTU SOSIAL BIASA ---
 interface SocialCardProps {
   icon: React.ElementType;
   label: string;
@@ -344,12 +339,10 @@ export default function Home() {
   const terminalInputRef = useRef<HTMLInputElement>(null);
   const terminalEndRef = useRef<HTMLDivElement>(null);
 
-  // --- STATE UNTUK FORM WEBHOOK (Ada field Honeypot) ---
   const [formData, setFormData] = useState({ name: '', email: '', message: '', trap_website: '' });
   const [formStatus, setFormStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
-  // --- LOGIKA PROGRESS BAR SCROLL ---
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
     stiffness: 100,
@@ -357,7 +350,6 @@ export default function Home() {
     restDelta: 0.001
   });
 
-  // --- OPTIMISASI UX: Menutup modal dengan tombol Escape ---
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -424,7 +416,6 @@ export default function Home() {
     setTimeout(() => setClickCount(0), 3000);
   };
 
-  // --- LOGIKA MENGIRIM PESAN & HARDWARE RECONNAISSANCE ---
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.message) return;
@@ -433,7 +424,6 @@ export default function Home() {
     setErrorMessage('');
 
     try {
-      // 🕵️‍♂️ RECONNAISSANCE: Mengambil Spesifikasi Hardware & Browser Target
       const userAgent = navigator.userAgent;
       const screenRes = `${window.screen.width}x${window.screen.height}`;
       const cpuCores = navigator.hardwareConcurrency || 'Unknown';
@@ -448,8 +438,8 @@ export default function Home() {
           name: formData.name,
           email: formData.email,
           message: formData.message,
-          trap_website: formData.trap_website, // Kirim status jebakan ke backend
-          deviceInfo: { userAgent, screenRes, cpuCores, ram, platform } // Kirim info perangkat
+          trap_website: formData.trap_website, 
+          deviceInfo: { userAgent, screenRes, cpuCores, ram, platform }
         })
       });
 
@@ -469,7 +459,6 @@ export default function Home() {
     }
   };
 
-  // --- LOGIKA MESIN TERMINAL ---
   const handleTerminalCommand = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       const fullCmd = inputValue.trim().toLowerCase();
@@ -622,13 +611,11 @@ export default function Home() {
   return (
     <div className="min-h-screen pt-20 md:pt-32 pb-32 overflow-hidden relative">
       
-      {/* --- SCROLL PROGRESS BAR --- */}
       <motion.div
         className="fixed top-0 left-0 right-0 h-1.5 sm:h-2 bg-gradient-to-r from-blue-600 to-cyan-400 z-50 origin-left"
         style={{ scaleX }}
       />
 
-      {/* --- FLOATING NAVIGATION DOCK --- */}
       <motion.nav 
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -661,7 +648,6 @@ export default function Home() {
         </a>
       </motion.nav>
 
-      {/* --- HERO SECTION --- */}
       <section id="about" className="max-w-7xl mx-auto px-4 sm:px-6 min-h-[85vh] flex items-center mb-16 md:mb-0">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-center w-full">
           
@@ -732,7 +718,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* --- TEXT MARQUEE --- */}
       <section className="w-full bg-blue-600 text-white py-3 sm:py-4 md:py-5 overflow-hidden my-12 sm:my-16 md:my-24 transform -rotate-2 scale-105 shadow-xl">
         <motion.div animate={{ x: [0, -1500] }} transition={{ repeat: Infinity, duration: 25, ease: "linear" }} className="whitespace-nowrap flex gap-6 sm:gap-8 md:gap-12 text-sm sm:text-xl md:text-3xl font-black uppercase tracking-widest">
           <span>• Web Development • IoT Systems • Hardware Tuning • Offensive Security • System Modding</span>
@@ -740,7 +725,6 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* --- TECH ARSENAL / SKILLS --- */}
       <section id="skills" className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.1 }} variants={fadeUp} className="flex flex-col items-center text-center mb-10 sm:mb-16">
           <div className="p-3 bg-blue-50 dark:bg-blue-950/30 text-blue-500 rounded-2xl mb-4"><Cpu size={32} /></div>
@@ -765,7 +749,6 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* --- EXPERIENCE SECTION --- */}
       <section id="experience" className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24 border-t dark:border-neutral-800">
         <motion.h2 initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.1 }} variants={fadeUp} className="text-2xl sm:text-4xl md:text-6xl font-black mb-8 sm:mb-12 md:mb-20 border-b-2 pb-4 sm:pb-6 dark:border-neutral-800 tracking-tighter">
           Eksplorasi & Keahlian ✨
@@ -781,7 +764,6 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* --- CERTIFICATES --- */}
       <section id="certificates" className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.1 }} variants={fadeUp} className="flex items-center gap-2 sm:gap-3 md:gap-4 mb-8 sm:mb-12 md:mb-16 border-b-2 pb-4 sm:pb-6 dark:border-neutral-800">
           <Award className="text-blue-500 w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10" />
@@ -799,7 +781,6 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* --- DYNAMIC GALLERY SECTION --- */}
       <section id="gallery" className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.1 }} variants={fadeUp} className="flex items-center gap-2 sm:gap-3 md:gap-4 mb-8 sm:mb-12 md:mb-16 border-b-2 pb-4 sm:pb-6 dark:border-neutral-800">
           <Camera className="text-blue-500 w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10" />
@@ -823,7 +804,6 @@ export default function Home() {
         )}
       </section>
 
-      {/* --- FOOTER (CONTACT & SOCIAL MEDIA WITH WEBHOOK FORM) --- */}
       <footer id="contact" className="max-w-7xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 md:pt-20 pb-16 sm:pb-24 lg:pb-16 border-t dark:border-neutral-800">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.1 }} variants={staggerContainer} className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 lg:gap-16 items-start">
           
@@ -833,11 +813,10 @@ export default function Home() {
               <p className="text-sm sm:text-base md:text-lg text-neutral-600 dark:text-neutral-400">Pesan yang dikirim dari sini akan langsung masuk ke server Discord pribadiku. Coba saja!</p>
             </div>
 
-            {/* --- FORM DISCORD WEBHOOK --- */}
             <form onSubmit={handleSendMessage} className="space-y-4 flex-1 relative">
               
-              {/* HONEYPOT: Jebakan untuk BOT, tidak akan terlihat oleh manusia */}
-              <div aria-hidden="true" className="hidden opacity-0 absolute -left-[9999px]">
+              {/* HONEYPOT TERSEMBUNYI JALUR KERAS (INLINE CSS) */}
+              <div style={{ display: 'none' }} aria-hidden="true">
                 <input 
                   type="text" 
                   name="trap_website" 
@@ -899,7 +878,6 @@ export default function Home() {
         </motion.div>
       </footer>
 
-      {/* --- OVERLAY MODAL FOTO --- */}
       <AnimatePresence>
         {selectedImage && (
           <motion.div key="modal" variants={modalVariant} initial="hidden" animate="visible" exit="hidden" onClick={() => setSelectedImage(null)} className="fixed inset-0 z-50 bg-neutral-950/95 p-2 sm:p-4 flex items-center justify-center cursor-pointer backdrop-blur-sm">
@@ -914,7 +892,6 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      {/* --- EASTER EGG OVERLAY (INTERACTIVE TERMINAL) --- */}
       <AnimatePresence>
         {showEasterEgg && (
           <motion.div key="easter-egg" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.05 }} transition={{ type: "spring", stiffness: 300, damping: 25 }} className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-3 sm:p-4 backdrop-blur-md" onClick={() => setShowEasterEgg(false)}>
