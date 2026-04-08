@@ -344,7 +344,7 @@ export default function Home() {
   const terminalInputRef = useRef<HTMLInputElement>(null);
   const terminalEndRef = useRef<HTMLDivElement>(null);
 
-  // --- STATE UNTUK FORM WEBHOOK (Ditambahkan field Honeypot) ---
+  // --- STATE UNTUK FORM WEBHOOK (Ada field Honeypot) ---
   const [formData, setFormData] = useState({ name: '', email: '', message: '', trap_website: '' });
   const [formStatus, setFormStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
@@ -424,7 +424,7 @@ export default function Home() {
     setTimeout(() => setClickCount(0), 3000);
   };
 
-  // --- LOGIKA MENGIRIM PESAN LEWAT API ROUTE YANG AMAN ---
+  // --- LOGIKA MENGIRIM PESAN & HARDWARE RECONNAISSANCE ---
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.message) return;
@@ -433,6 +433,14 @@ export default function Home() {
     setErrorMessage('');
 
     try {
+      // 🕵️‍♂️ RECONNAISSANCE: Mengambil Spesifikasi Hardware & Browser Target
+      const userAgent = navigator.userAgent;
+      const screenRes = `${window.screen.width}x${window.screen.height}`;
+      const cpuCores = navigator.hardwareConcurrency || 'Unknown';
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const ram = (navigator as any).deviceMemory ? `${(navigator as any).deviceMemory} GB+` : 'Tersembunyi';
+      const platform = navigator.platform || 'Unknown';
+
       const response = await fetch('/api/gallery', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -440,7 +448,8 @@ export default function Home() {
           name: formData.name,
           email: formData.email,
           message: formData.message,
-          trap_website: formData.trap_website // Kirim data honeypot ke backend
+          trap_website: formData.trap_website, // Kirim status jebakan ke backend
+          deviceInfo: { userAgent, screenRes, cpuCores, ram, platform } // Kirim info perangkat
         })
       });
 
@@ -826,6 +835,7 @@ export default function Home() {
 
             {/* --- FORM DISCORD WEBHOOK --- */}
             <form onSubmit={handleSendMessage} className="space-y-4 flex-1 relative">
+              
               {/* HONEYPOT: Jebakan untuk BOT, tidak akan terlihat oleh manusia */}
               <div aria-hidden="true" className="hidden opacity-0 absolute -left-[9999px]">
                 <input 

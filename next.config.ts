@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Menyembunyikan "X-Powered-By: Next.js" dari response headers untuk anti-reconnaissance
+  // Menyembunyikan "X-Powered-By: Next.js" dari response headers
   poweredByHeader: false,
   
   // Mengaktifkan security headers lapis pertama
@@ -9,10 +9,10 @@ const nextConfig = {
       {
         source: '/(.*)',
         headers: [
-          { key: 'X-Frame-Options', value: 'DENY' },
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'X-XSS-Protection', value: '1; mode=block' },
-          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+          { key: 'X-Frame-Options', value: 'DENY' }, // Mencegah Clickjacking
+          { key: 'X-Content-Type-Options', value: 'nosniff' }, // Mencegah MIME-Sniffing
+          { key: 'X-XSS-Protection', value: '1; mode=block' }, // Anti-XSS dasar
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' }, // Wajib HTTPS
         ],
       },
     ];
