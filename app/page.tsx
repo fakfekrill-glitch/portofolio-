@@ -212,7 +212,6 @@ const DiscordProfileCard = ({ discordId }: { discordId: string }) => {
     return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  // --- LOGIKA URL MUSIK ---
   const getMusicUrl = () => {
     if (!listeningDetails) return '#';
     if (listeningDetails.sync_id) {
@@ -345,9 +344,10 @@ export default function Home() {
   const terminalInputRef = useRef<HTMLInputElement>(null);
   const terminalEndRef = useRef<HTMLDivElement>(null);
 
-  // --- STATE UNTUK FORM WEBHOOK ---
-  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+  // --- STATE UNTUK FORM WEBHOOK (Ditambahkan field Honeypot) ---
+  const [formData, setFormData] = useState({ name: '', email: '', message: '', trap_website: '' });
   const [formStatus, setFormStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
 
   // --- LOGIKA PROGRESS BAR SCROLL ---
   const { scrollYProgress } = useScroll();
@@ -430,25 +430,29 @@ export default function Home() {
     if (!formData.name || !formData.email || !formData.message) return;
 
     setFormStatus('loading');
+    setErrorMessage('');
 
     try {
-      // Kita kirim data ke API buatan kita sendiri (/api/gallery), BUKAN ke Discord langsung
       const response = await fetch('/api/gallery', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
-          message: formData.message
+          message: formData.message,
+          trap_website: formData.trap_website // Kirim data honeypot ke backend
         })
       });
 
+      const data = await response.json();
+
       if (response.ok) {
         setFormStatus('success');
-        setFormData({ name: '', email: '', message: '' });
+        setFormData({ name: '', email: '', message: '', trap_website: '' });
         setTimeout(() => setFormStatus('idle'), 5000);
       } else {
-        throw new Error('Gagal mengirim');
+        setErrorMessage(data.error || 'Gagal mengirim');
+        throw new Error(data.error || 'Gagal mengirim');
       }
     } catch (error) {
       setFormStatus('error');
@@ -821,7 +825,19 @@ export default function Home() {
             </div>
 
             {/* --- FORM DISCORD WEBHOOK --- */}
-            <form onSubmit={handleSendMessage} className="space-y-4 flex-1">
+            <form onSubmit={handleSendMessage} className="space-y-4 flex-1 relative">
+              {/* HONEYPOT: Jebakan untuk BOT, tidak akan terlihat oleh manusia */}
+              <div aria-hidden="true" className="hidden opacity-0 absolute -left-[9999px]">
+                <input 
+                  type="text" 
+                  name="trap_website" 
+                  tabIndex={-1} 
+                  autoComplete="off"
+                  value={formData.trap_website} 
+                  onChange={e => setFormData({...formData, trap_website: e.target.value})} 
+                />
+              </div>
+
               <div className="space-y-4">
                 <input 
                   type="text" placeholder="Nama Kamu" required 
@@ -839,6 +855,11 @@ export default function Home() {
                   value={formData.message} onChange={e => setFormData({...formData, message: e.target.value})} 
                 />
               </div>
+
+              {errorMessage && (
+                <p className="text-red-500 text-xs sm:text-sm font-medium text-center">{errorMessage}</p>
+              )}
+
               <button 
                 type="submit" disabled={formStatus === 'loading'} 
                 className="w-full py-3.5 rounded-xl bg-neutral-950 dark:bg-white text-white dark:text-black font-bold transition-all disabled:opacity-50 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 shadow-lg"

@@ -19,27 +19,23 @@ export async function GET() {
   }
 }
 
-// --- FUNGSI POST: Webhook Discord dengan Anti-Spam & Origin Check ---
+// --- FUNGSI POST: Webhook Discord dengan Anti-Spam, Origin Check & Honeypot ---
 export async function POST(req: Request) {
   try {
     // 🚨 SECURITY 1: ORIGIN CHECK 🚨
-    // Blokir request jika tidak berasal dari domain/website-mu sendiri
     const origin = req.headers.get('origin');
     const host = req.headers.get('host');
     
-    // (Abaikan pengecekan origin jika sedang dijalankan di localhost untuk testing)
     if (origin && !origin.includes('localhost') && !origin.includes(host || '')) {
        console.warn(`[BLOCKED] Unauthorized API request from: ${origin}`);
        return NextResponse.json({ error: 'Akses Ditolak: Invalid Origin' }, { status: 403 });
     }
 
-    // Mengambil IP Address pengunjung
     const ipAddress = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'Unknown IP';
 
     // 🚨 SECURITY 2: RATE LIMITING (ANTI-SPAM) 🚨
-    // Batasi 1 pesan per 5 menit untuk setiap IP Address
     const now = Date.now();
-    const cooldownPeriod = 5 * 60 * 1000; // 5 Menit dalam milidetik
+    const cooldownPeriod = 5 * 60 * 1000; // 5 Menit
 
     if (rateLimitMap.has(ipAddress)) {
       const lastRequestTime = rateLimitMap.get(ipAddress)!;
@@ -50,29 +46,32 @@ export async function POST(req: Request) {
         }, { status: 429 });
       }
     }
-    // Catat waktu request IP ini
     rateLimitMap.set(ipAddress, now);
 
     // 1. Terima data dari Frontend
-    const { name, email, message } = await req.json();
+    const { name, email, message, trap_website } = await req.json();
 
-    // 🚨 SECURITY 3: DATA VALIDATION & SANITIZATION 🚨
+    // 🚨 SECURITY 3: HONEYPOT (JEBAKAN BOT) 🚨
+    if (trap_website) {
+      console.warn(`[SPAM BLOCKED] Bot terdeteksi masuk ke Honeypot dari IP: ${ipAddress}`);
+      // Pura-pura sukses agar bot senang, tapi aslinya dibuang
+      return NextResponse.json({ success: true, note: 'Bot trapped' }); 
+    }
+
+    // 🚨 SECURITY 4: DATA VALIDATION & SANITIZATION 🚨
     if (!name || !email || !message) {
       return NextResponse.json({ error: 'Data tidak lengkap' }, { status: 400 });
     }
 
-    // Batasi panjang karakter (mencegah payload raksasa yang bikin server lag)
     if (name.length > 50 || email.length > 100 || message.length > 1500) {
       return NextResponse.json({ error: 'Input melebihi batas karakter yang diizinkan' }, { status: 400 });
     }
 
-    // Regex sederhana untuk mengecek format email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json({ error: 'Format email tidak valid' }, { status: 400 });
     }
 
-    // Lanjut mengirim ke Discord...
     const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
     if (!webhookUrl) {
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
@@ -81,16 +80,17 @@ export async function POST(req: Request) {
     const country = req.headers.get('x-vercel-ip-country') || 'Unknown';
     const city = req.headers.get('x-vercel-ip-city') || 'Unknown';
 
+    // 4. Kirim data ke Discord secara aman
     const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         username: "CyberSec Bot",
-        avatar_url: "https://cdn-icons-png.flaticon.com/512/2092/2092663.png", // Icon shield/security
+        avatar_url: "https://cdn-icons-png.flaticon.com/512/2092/2092663.png", 
         embeds: [{
           title: "🚨 Pesan Terverifikasi",
-          description: "Pesan ini lolos dari Origin Check & Anti-Spam Firewall.",
-          color: 2895667, // Warna Hijau Aman
+          description: "Pesan ini lolos dari Origin Check, Honeypot & Anti-Spam Firewall.",
+          color: 2895667, 
           fields: [
             { name: "👤 Pengirim", value: `${name} (${email})`, inline: false },
             { name: "💬 Pesan", value: `>>> ${message}`, inline: false },
