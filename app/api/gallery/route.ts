@@ -27,7 +27,7 @@ export async function GET() {
   }
 }
 
-// --- FUNGSI POST: Untuk mengirim pesan ke Discord Webhook (Sistem Keamanan) ---
+// --- FUNGSI POST: Untuk mengirim pesan ke Discord Webhook (Sistem Keamanan & IP Tracker) ---
 export async function POST(req: Request) {
   try {
     // 1. Terima data dari Frontend
@@ -49,6 +49,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
+    // 🚨 FITUR BARU: MENGAMBIL IP & GEOLOKASI (Vercel Headers) 🚨
+    // Saat dijalankan di lokal (localhost), ini mungkin bernilai '::1' atau kosong.
+    // Tapi saat di-deploy ke Vercel, data ini akan sangat akurat.
+    const ipAddress = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'IP Tidak Terdeteksi';
+    const country = req.headers.get('x-vercel-ip-country') || 'Negara Unknown';
+    const city = req.headers.get('x-vercel-ip-city') || 'Kota Unknown';
+
     // 4. Kirim data ke Discord secara tertutup dari sisi Server Next.js
     const response = await fetch(webhookUrl, {
       method: 'POST',
@@ -58,14 +65,16 @@ export async function POST(req: Request) {
         avatar_url: "https://cdn-icons-png.flaticon.com/512/4782/4782472.png", // Ikon surat
         embeds: [{
           title: "📨 Pesan Baru dari Portofolio!",
-          description: "Pesan ini dikirim melalui jalur API yang aman.",
+          description: "Seseorang Baru Saja Mengirimkan Kamu Pesan.",
           color: 3447003, // Warna Biru
           fields: [
             { name: "👤 Nama", value: name, inline: true },
             { name: "📧 Email", value: email, inline: true },
-            { name: "💬 Pesan", value: message }
+            { name: "💬 Pesan", value: message },
+            // Menambahkan kolom baru untuk Info Pengirim (IP & Lokasi)
+            { name: "🌐 Info Pelacak Sistem", value: `**IP Address:** \`${ipAddress}\`\n**Lokasi:** ${city}, ${country}`, inline: false }
           ],
-          footer: { text: "Secured via Next.js API Route" },
+          footer: { text: "Secured via Next.js API Route | Tracker Active" },
           timestamp: new Date().toISOString()
         }]
       })
