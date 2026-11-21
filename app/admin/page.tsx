@@ -26,7 +26,8 @@ import {
 import { usePortfolioData } from '@/lib/portfolioStore';
 import { sha256, DEFAULT_ADMIN_HASH, validateAndReadImageFile, sanitizeString } from '@/lib/security';
 import { CertificateItem, ProjectProofItem } from '@/lib/types';
-import { parseGitHubUrl, generateReadmeScreenshotSvg, extractReadmeSummary } from '@/lib/githubReadme';
+import { parseGitHubUrl, extractReadmeSummary } from '@/lib/githubReadme';
+import ScrollableReadmeWindow from '@/components/ScrollableReadmeWindow';
 
 const AUTH_STORAGE_KEY = 'dalu_admin_session';
 const PASSKEY_HASH_KEY = 'dalu_admin_passkey_hash';
@@ -290,8 +291,12 @@ export default function AdminPage() {
   // Save Project Proof
   const handleSaveProject = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!projectForm.title || !projectForm.image) {
-      alert('Judul proyek dan gambar bukti pengerjaan wajib diisi!');
+    if (!projectForm.title) {
+      alert('Judul proyek wajib diisi!');
+      return;
+    }
+    if (!projectForm.image && !projectForm.readmeContent && !projectForm.proofUrl) {
+      alert('Masukkan gambar bukti proyek atau hubungkan ke repository GitHub README!');
       return;
     }
 
@@ -329,7 +334,9 @@ export default function AdminPage() {
       description: '',
       image: '',
       tags: ['POCO X3 Pro', 'sm8150'],
-      proofUrl: ''
+      proofUrl: '',
+      githubRepo: '',
+      readmeContent: ''
     });
     setTagsInput('POCO X3 Pro, sm8150');
     setProjectImagePreview('');
@@ -354,7 +361,7 @@ export default function AdminPage() {
     window.scrollTo({ top: 300, behavior: 'smooth' });
   };
 
-  // Auto-Fetch & Generate Screenshot from GitHub README
+  // Auto-Fetch & Connect Live GitHub README (Without forced SVG image conversion)
   const handleFetchGitHubReadme = async () => {
     if (!projectForm.proofUrl) {
       alert('Masukkan link repository GitHub terlebih dahulu pada kolom Tautan Repository!');
@@ -387,15 +394,11 @@ export default function AdminPage() {
         if (json.success && json.data) {
           const repoData = json.data;
 
-          if (repoData.screenshotSvg) {
-            setProjectImagePreview(repoData.screenshotSvg);
-          }
-
           const { title: readmeTitle, summary: readmeSummary } = extractReadmeSummary(repoData.readme || '');
 
           const newTitle =
             projectForm.title.trim() === ''
-              ? readmeTitle || repoData.repo.replace(/[-_]/g, ' ').toUpperCase()
+              ? readmeTitle || initialTitle
               : projectForm.title;
 
           const newDesc =
@@ -413,22 +416,22 @@ export default function AdminPage() {
 
           setTagsInput(combinedTags.join(', '));
 
+          // Save live README directly, leave image for manual uploads only
           setProjectForm((prev) => ({
             ...prev,
             title: newTitle,
             description: newDesc,
-            image: repoData.screenshotSvg || prev.image,
             githubRepo: repoData.fullName,
             readmeContent: repoData.readme || ''
           }));
 
-          showToast(`Berhasil membuat screenshot README asli untuk ${repoData.fullName}!`);
+          showToast(`Berhasil menghubungkan Live README untuk ${repoData.fullName}!`);
           setFetchingGithub(false);
           return;
         }
       }
 
-      // 2. Fallback: Direct client-side fetch from raw GitHub if API endpoint was slow or rate-limited
+      // 2. Fallback: Direct client-side fetch from raw GitHub
       for (const branch of ['main', 'master', 'HEAD', 'dev', 'develop']) {
         try {
           const rawRes = await fetch(
@@ -441,27 +444,15 @@ export default function AdminPage() {
             const resolvedTitle = projectForm.title.trim() || readmeTitle || parsed.repo.replace(/[-_]/g, ' ').toUpperCase();
             const resolvedDesc = projectForm.description.trim() || readmeSummary || initialDesc;
 
-            const enrichedSvg = generateReadmeScreenshotSvg({
-              owner: parsed.owner,
-              repo: parsed.repo,
-              title: resolvedTitle,
-              description: resolvedDesc,
-              branch,
-              readme: rawText,
-              tags: ['POCO X3 Pro', 'sm8150', 'vayu']
-            });
-
-            setProjectImagePreview(enrichedSvg);
             setProjectForm((prev) => ({
               ...prev,
               title: resolvedTitle,
               description: resolvedDesc,
-              image: enrichedSvg,
               githubRepo: `${parsed.owner}/${parsed.repo}`,
               readmeContent: rawText
             }));
 
-            showToast(`Berhasil menarik README asli langsung dari GitHub (${branch})!`);
+            showToast(`Berhasil menarik Live README asli dari GitHub (${branch})!`);
             setFetchingGithub(false);
             return;
           }
@@ -470,24 +461,7 @@ export default function AdminPage() {
         }
       }
 
-      // 3. Fallback: Generate template screenshot if README could not be fetched
-      const immediateSvg = generateReadmeScreenshotSvg({
-        owner: parsed.owner,
-        repo: parsed.repo,
-        title: initialTitle,
-        description: initialDesc,
-        tags: ['POCO X3 Pro', 'sm8150', 'vayu']
-      });
-
-      setProjectImagePreview(immediateSvg);
-      setProjectForm((prev) => ({
-        ...prev,
-        title: initialTitle,
-        description: initialDesc,
-        image: immediateSvg,
-        githubRepo: `${parsed.owner}/${parsed.repo}`
-      }));
-      showToast('README belum tersedia di branch publik, generated snapshot preview.');
+      showToast('README belum tersedia di branch utama, form dapat diisi secara manual.');
     } catch {
       showToast('Gagal menarik data GitHub, gunakan upload manual jika diperlukan.');
     } finally {
@@ -1229,15 +1203,35 @@ export default function AdminPage() {
                     onClick={handleFetchGitHubReadme}
                     disabled={fetchingGithub}
                     className="px-4 py-2.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-400 text-xs font-mono font-bold flex items-center justify-center gap-1.5 shrink-0 transition-colors disabled:opacity-50 cursor-pointer min-h-[42px]"
-                    title="Tarik README & Otomatis Buat Screenshot Code Window dari GitHub"
+                    title="Tarik README langsung dari GitHub agar bisa di-scroll live"
                   >
                     <Zap className={`w-3.5 h-3.5 ${fetchingGithub ? 'animate-spin text-cyan-400' : 'text-emerald-400'}`} />
-                    <span>{fetchingGithub ? 'Menarik Data & Snapshot...' : 'Auto-Generate Screenshot README'}</span>
+                    <span>{fetchingGithub ? 'Menghubungkan README...' : 'Hubungkan Live README'}</span>
                   </button>
                 </div>
                 <p className="text-[11px] font-mono text-slate-500 mt-1">
-                  ⚡ <strong>Auto-Snapshot</strong>: Masukkan link GitHub repo, lalu klik tombol di atas untuk otomatis generate screenshot card dari README & autofill info proyek.
+                  ⚡ <strong>Live Scrollable</strong>: Masukkan link GitHub repo lalu klik tombol di atas untuk menghubungkan README asli. README akan langsung dapat di-scroll di kartu proyek tanpa dikonversi ke gambar SVG.
                 </p>
+
+                {projectForm.readmeContent && (
+                  <div className="mt-3 space-y-2">
+                    <div className="flex items-center justify-between text-xs font-mono text-emerald-400">
+                      <span className="flex items-center gap-1.5 font-bold">
+                        <CheckCircle className="w-4 h-4" />
+                        <span>Live Scrollable README Terhubung ({projectForm.githubRepo || 'GitHub'})</span>
+                      </span>
+                      <span className="text-slate-400 text-[11px]">{projectForm.readmeContent.split('\n').length} baris</span>
+                    </div>
+                    <div className="max-w-xl rounded-xl overflow-hidden border border-slate-800">
+                      <ScrollableReadmeWindow
+                        githubRepo={projectForm.githubRepo}
+                        proofUrl={projectForm.proofUrl}
+                        initialContent={projectForm.readmeContent}
+                        maxHeight="max-h-[220px]"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -1269,12 +1263,12 @@ export default function AdminPage() {
 
               <div>
                 <label className="block text-xs font-mono text-slate-400 mb-2">
-                  Tangkapan Layar Bukti (Screenshot Build, Ramoops Log, Benchmarking)
+                  Tangkapan Layar Bukti Manual (Opsional, khusus foto screenshot build log, benchmark, atau pstore)
                 </label>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                   <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-mono text-slate-200 cursor-pointer">
                     <Upload className="w-4 h-4 text-emerald-400" />
-                    <span>Upload Screenshot Bukti</span>
+                    <span>Upload Foto Manual</span>
                     <input
                       type="file"
                       accept="image/png,image/jpeg,image/webp"
@@ -1285,7 +1279,7 @@ export default function AdminPage() {
                   {projectImagePreview && (
                     <div className="flex items-center gap-2 text-xs font-mono text-emerald-400">
                       <CheckCircle className="w-4 h-4" />
-                      <span>Gambar bukti siap diunggah</span>
+                      <span>Foto bukti manual siap diunggah</span>
                     </div>
                   )}
                 </div>
@@ -1297,16 +1291,13 @@ export default function AdminPage() {
                       alt="Pratinjau Bukti"
                       className="w-full h-full object-cover"
                     />
-                    {projectImagePreview.startsWith('data:image/svg+xml') && (
-                      <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded text-[10px] font-mono bg-slate-950/90 text-emerald-400 border border-emerald-500/30 backdrop-blur-sm">
-                        ⚡ Auto-Snapshot GitHub README
-                      </span>
-                    )}
                   </div>
                 ) : (
-                  <div className="mt-3 p-4 rounded-xl border border-dashed border-slate-800 bg-slate-950/50 text-xs font-mono text-slate-500 flex items-center justify-center">
-                    Belum ada screenshot bukti yang dipilih atau di-generate.
-                  </div>
+                  <p className="mt-2 text-[11px] font-mono text-slate-500">
+                    {projectForm.readmeContent
+                      ? 'ℹ️ Proyek ini menggunakan Live Scrollable README. Foto manual tidak wajib.'
+                      : 'Belum ada foto manual yang dipilih.'}
+                  </p>
                 )}
               </div>
 
@@ -1331,16 +1322,26 @@ export default function AdminPage() {
                     className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col justify-between group"
                   >
                     <div>
-                      <div className="relative aspect-video bg-black/60 overflow-hidden">
-                        <img
-                          src={proj.image}
-                          alt={proj.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                      <div className="relative aspect-video bg-black/80 overflow-hidden">
+                        {proj.image && !proj.image.startsWith('data:image/svg+xml') ? (
+                          <img
+                            src={proj.image}
+                            alt={proj.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        ) : (
+                          <ScrollableReadmeWindow
+                            githubRepo={proj.githubRepo}
+                            proofUrl={proj.proofUrl}
+                            initialContent={proj.readmeContent}
+                            maxHeight="max-h-[160px]"
+                            className="w-full h-full border-0 rounded-none shadow-none"
+                          />
+                        )}
+                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 pointer-events-none">
                           {proj.category}
                         </div>
-                        <div className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-mono bg-black/70 text-slate-300">
+                        <div className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-mono bg-black/70 text-slate-300 pointer-events-none">
                           {proj.version}
                         </div>
                       </div>

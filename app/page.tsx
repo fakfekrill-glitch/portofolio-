@@ -23,6 +23,7 @@ import {
 import DiscordActivity from '@/components/DiscordActivity';
 import LightboxModal from '@/components/LightboxModal';
 import AestheticBanner from '@/components/AestheticBanner';
+import ScrollableReadmeWindow from '@/components/ScrollableReadmeWindow';
 import { usePortfolioData } from '@/lib/portfolioStore';
 import { ProjectProofItem, CertificateItem } from '@/lib/types';
 
@@ -85,6 +86,9 @@ export default function HomePage() {
 
   // Email Copy State
   const [copiedEmail, setCopiedEmail] = useState(false);
+
+  // Card view mode toggles ('photo' | 'readme')
+  const [cardViewModes, setCardViewModes] = useState<Record<string, 'photo' | 'readme'>>({});
 
   // Local Clock (WIB)
   const [wibTime, setWibTime] = useState<string>('');
@@ -508,57 +512,94 @@ export default function HomePage() {
 
           {/* Projects Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProjects.map((project, idx) => (
-              <motion.div
-                key={project.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.1 }}
-                transition={{ duration: 0.45, delay: idx * 0.05, ease: [0.16, 1, 0.3, 1] }}
-                whileHover={{ y: -4 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => handleOpenProject(project)}
-                className="bg-slate-900/90 backdrop-blur-sm border border-slate-800 rounded-xl overflow-hidden hover:border-emerald-500/50 transition-all duration-300 cursor-pointer flex flex-col justify-between group shadow-md hover:shadow-xl"
-              >
-                <div>
-                  {/* Thumbnail with Zoom icon overlay */}
-                  <div className="relative aspect-video bg-black/60 overflow-hidden">
-                    <img
-                      src={project.image}
-                      alt={project.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                      <span className="p-2.5 rounded-full bg-slate-900/80 text-white backdrop-blur-sm">
-                        <ZoomIn className="w-5 h-5 text-emerald-400" />
-                      </span>
-                    </div>
+            {filteredProjects.map((project, idx) => {
+              const isSvg = project.image?.startsWith('data:image/svg+xml');
+              const isManualPhoto = Boolean(project.image && !isSvg);
+              const hasReadme = Boolean(project.readmeContent || project.githubRepo || project.proofUrl?.includes('github.com') || isSvg);
+              const currentMode = cardViewModes[project.id] || (isManualPhoto ? 'photo' : 'readme');
 
-                    {/* Badges */}
-                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-mono bg-slate-950/80 text-emerald-400 border border-emerald-500/30">
-                      {project.category}
-                    </div>
-                    <div className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-mono bg-slate-950/80 text-slate-300 border border-slate-800">
-                      {project.version}
-                    </div>
+              return (
+                <motion.div
+                  key={project.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.1 }}
+                  transition={{ duration: 0.45, delay: idx * 0.05, ease: [0.16, 1, 0.3, 1] }}
+                  whileHover={{ y: -4 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => handleOpenProject(project)}
+                  className="bg-slate-900/90 backdrop-blur-sm border border-slate-800 rounded-xl overflow-hidden hover:border-emerald-500/50 transition-all duration-300 cursor-pointer flex flex-col justify-between group shadow-md hover:shadow-xl"
+                >
+                  <div>
+                    {/* Thumbnail: Live Scrollable README or Manual Photo */}
+                    <div className="relative aspect-video bg-black/80 overflow-hidden">
+                      {currentMode === 'readme' || !isManualPhoto ? (
+                        <div className="w-full h-full relative" onClick={(e) => e.stopPropagation()}>
+                          <ScrollableReadmeWindow
+                            githubRepo={project.githubRepo}
+                            proofUrl={project.proofUrl}
+                            initialContent={project.readmeContent}
+                            maxHeight="max-h-[195px]"
+                            showExpandButton={true}
+                            onExpand={() => handleOpenProject(project)}
+                            className="w-full h-full border-0 rounded-none shadow-none"
+                          />
+                          {isManualPhoto && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setCardViewModes((prev) => ({ ...prev, [project.id]: 'photo' }));
+                              }}
+                              className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-mono bg-slate-950/90 text-slate-300 hover:text-white border border-slate-700/80 cursor-pointer shadow-md"
+                            >
+                              Foto Bukti
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="w-full h-full relative">
+                          <img
+                            src={project.image}
+                            alt={project.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                          <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                            <span className="p-2.5 rounded-full bg-slate-900/80 text-white backdrop-blur-sm">
+                              <ZoomIn className="w-5 h-5 text-emerald-400" />
+                            </span>
+                          </div>
 
-                    {(project.proofUrl?.includes('github.com') || project.githubRepo) && (
-                      <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded text-[9px] font-mono bg-slate-950/90 text-slate-300 border border-slate-700/80 flex items-center gap-1 backdrop-blur-sm">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                        <span>GitHub README Embedded</span>
+                          {hasReadme && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setCardViewModes((prev) => ({ ...prev, [project.id]: 'readme' }));
+                              }}
+                              className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-950/90 text-emerald-400 hover:text-emerald-300 border border-emerald-500/40 cursor-pointer flex items-center gap-1 shadow-md backdrop-blur-sm"
+                            >
+                              <span>Scroll README</span>
+                            </button>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Badges */}
+                      <div className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-mono bg-slate-950/80 text-emerald-400 border border-emerald-500/30 pointer-events-none">
+                        {project.category}
                       </div>
-                    )}
-                  </div>
+                    </div>
 
-                  <div className="p-5">
-                    <h3 className="font-bold text-base text-slate-100 group-hover:text-emerald-400 transition-colors leading-snug">
-                      {project.title}
-                    </h3>
-                    <p className="text-xs text-slate-400 mt-2 line-clamp-3 leading-relaxed font-sans">
-                      {project.description}
-                    </p>
+                    <div className="p-5">
+                      <h3 className="font-bold text-base text-slate-100 group-hover:text-emerald-400 transition-colors leading-snug">
+                        {project.title}
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-2 line-clamp-3 leading-relaxed font-sans">
+                        {project.description}
+                      </p>
+                    </div>
                   </div>
-                </div>
 
                 {/* Tags & Actions */}
                 <div className="p-4 border-t border-slate-800/80 bg-slate-950/40 flex items-center justify-between text-xs font-mono">
@@ -578,7 +619,8 @@ export default function HomePage() {
                   </span>
                 </div>
               </motion.div>
-            ))}
+            );
+          })}
           </div>
         </section>
 

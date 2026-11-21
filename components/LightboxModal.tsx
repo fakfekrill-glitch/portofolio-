@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, ExternalLink, FileText, Image as ImageIcon, Copy, Check, Terminal, GitBranch, ArrowUpRight } from 'lucide-react';
+import { X, ExternalLink, FileText, Image as ImageIcon, Copy, Check, Terminal, GitBranch } from 'lucide-react';
 import { parseGitHubUrl } from '@/lib/githubReadme';
 import MarkdownViewer from '@/components/MarkdownViewer';
 
@@ -30,21 +30,28 @@ export default function LightboxModal({
   readmeContent: initialReadme,
   githubRepo: initialRepo
 }: LightboxModalProps) {
-  const [activeTab, setActiveTab] = useState<'preview' | 'readme'>('preview');
+  // Check if image is a real manual photo (not an SVG)
+  const isManualPhoto = Boolean(imageSrc && !imageSrc.startsWith('data:image/svg+xml'));
+
+  // Determine if this project is connected to a GitHub repository
+  const githubInfo = parseGitHubUrl(proofUrl || '') || (initialRepo ? parseGitHubUrl(`github.com/${initialRepo}`) : null);
+  const hasReadme = Boolean(initialReadme || githubInfo);
+
+  // If there is no manual photo, default to README tab directly!
+  const [activeTab, setActiveTab] = useState<'preview' | 'readme'>(
+    isManualPhoto ? 'preview' : (hasReadme ? 'readme' : 'preview')
+  );
   const [readmeText, setReadmeText] = useState<string>(initialReadme || '');
   const [loadingReadme, setLoadingReadme] = useState<boolean>(false);
   const [copiedReadme, setCopiedReadme] = useState<boolean>(false);
 
-  // Determine if this project is connected to a GitHub repository
-  const githubInfo = parseGitHubUrl(proofUrl || '') || (initialRepo ? parseGitHubUrl(`github.com/${initialRepo}`) : null);
-
   // Reset tab on open
   useEffect(() => {
     if (isOpen) {
-      setActiveTab('preview');
+      setActiveTab(isManualPhoto ? 'preview' : (hasReadme ? 'readme' : 'preview'));
       setReadmeText(initialReadme || '');
     }
-  }, [isOpen, initialReadme]);
+  }, [isOpen, initialReadme, isManualPhoto, hasReadme]);
 
   // Escape key handler
   useEffect(() => {
@@ -63,9 +70,9 @@ export default function LightboxModal({
     };
   }, [isOpen, onClose]);
 
-  // Fetch README live if user switches to README tab and it's not loaded yet
+  // Fetch README live if user is on README tab and it's not loaded yet
   useEffect(() => {
-    if (activeTab === 'readme' && !readmeText && githubInfo) {
+    if (isOpen && activeTab === 'readme' && !readmeText && githubInfo) {
       let isSubscribed = true;
       setLoadingReadme(true);
 
@@ -120,7 +127,7 @@ export default function LightboxModal({
         isSubscribed = false;
       };
     }
-  }, [activeTab, readmeText, githubInfo]);
+  }, [isOpen, activeTab, readmeText, githubInfo]);
 
   const handleCopyReadme = () => {
     if (typeof navigator !== 'undefined' && readmeText) {
@@ -157,8 +164,8 @@ export default function LightboxModal({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            {/* Dual Tab Switcher (Bukti Screenshot vs Embedded README) */}
-            {githubInfo && (
+            {/* Tab Switcher if both manual photo and GitHub README are present */}
+            {isManualPhoto && hasReadme && (
               <div className="flex items-center bg-slate-950 border border-slate-800 rounded-lg p-0.5 font-mono text-xs">
                 <button
                   type="button"
@@ -170,8 +177,8 @@ export default function LightboxModal({
                   }`}
                 >
                   <ImageIcon className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Bukti Screenshot</span>
-                  <span className="sm:hidden">Bukti</span>
+                  <span className="hidden sm:inline">Foto Bukti</span>
+                  <span className="sm:hidden">Foto</span>
                 </button>
                 <button
                   type="button"
@@ -183,7 +190,7 @@ export default function LightboxModal({
                   }`}
                 >
                   <FileText className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Embedded README</span>
+                  <span className="hidden sm:inline">Scroll README</span>
                   <span className="sm:hidden">README</span>
                 </button>
               </div>
@@ -200,7 +207,7 @@ export default function LightboxModal({
         </div>
 
         {/* Modal Main Display Area */}
-        {activeTab === 'preview' ? (
+        {activeTab === 'preview' && isManualPhoto ? (
           <div className="relative flex-1 bg-black/60 min-h-[300px] sm:min-h-[440px] flex flex-col items-center justify-center p-2 sm:p-4 overflow-y-auto">
             <div className="relative max-w-full max-h-[70vh] flex items-center justify-center">
               <img
@@ -209,30 +216,15 @@ export default function LightboxModal({
                 className="max-h-[66vh] max-w-full object-contain rounded-xl shadow-2xl border border-slate-800/80"
               />
             </div>
-
-            {/* Quick Switcher Strip below image */}
-            {githubInfo && (
-              <div className="mt-3 flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('readme')}
-                  className="px-3 py-1.5 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-slate-200 hover:text-emerald-400 text-xs font-mono flex items-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <FileText className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Buka Teks Lengkap Full README</span>
-                  <ArrowUpRight className="w-3 h-3" />
-                </button>
-              </div>
-            )}
           </div>
         ) : (
-          <div className="relative flex-1 bg-slate-950 min-h-[320px] sm:min-h-[440px] max-h-[70vh] overflow-y-auto p-4 sm:p-6 md:p-8 flex flex-col">
+          <div className="relative flex-1 bg-slate-950 min-h-[320px] sm:min-h-[440px] max-h-[72vh] overflow-y-auto p-4 sm:p-6 md:p-8 flex flex-col">
             {/* Embedded README Header Strip */}
             <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-5 border-b border-slate-800 text-xs font-mono shrink-0">
               <div className="flex items-center gap-2 text-slate-300">
                 <Terminal className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span className="font-bold text-white truncate max-w-[200px] sm:max-w-none">
-                  {githubInfo?.owner} / {githubInfo?.repo}
+                  {githubInfo ? `${githubInfo.owner} / ${githubInfo.repo}` : title}
                 </span>
                 <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 border border-slate-700 flex items-center gap-1">
                   <GitBranch className="w-3 h-3 text-emerald-400" />
