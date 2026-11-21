@@ -3,7 +3,7 @@ const nextConfig = {
   // Sembunyikan header internal Next.js
   poweredByHeader: false,
 
-  // Konfigurasi domain gambar eksternal yang diizinkan (Discord CDN, Spotify, dll)
+  // Konfigurasi domain gambar eksternal yang diizinkan (Discord CDN, Spotify, GitHub, dll)
   images: {
     remotePatterns: [
       {
@@ -17,6 +17,14 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'i.scdn.co',
+      },
+      {
+        protocol: 'https',
+        hostname: 'avatars.githubusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'raw.githubusercontent.com',
       },
     ],
   },
@@ -57,9 +65,9 @@ const nextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https://cdn.discordapp.com https://media.discordapp.net https://i.scdn.co https://cdn-icons-png.flaticon.com https://*.lanyard.rest",
+              "img-src 'self' data: blob: https://cdn.discordapp.com https://media.discordapp.net https://i.scdn.co https://cdn-icons-png.flaticon.com https://*.lanyard.rest https://avatars.githubusercontent.com https://raw.githubusercontent.com https://github.com",
               "font-src 'self' data:",
-              "connect-src 'self' https://api.lanyard.rest wss://api.lanyard.rest https://dns.google https://api.ipify.org https://open.spotify.com",
+              "connect-src 'self' https://api.lanyard.rest wss://api.lanyard.rest https://dns.google https://api.ipify.org https://open.spotify.com https://api.github.com https://raw.githubusercontent.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

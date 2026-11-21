@@ -1,6 +1,6 @@
 /**
  * GitHub Repository & README Embedded Snapshot Generator
- * Provides parsing, metadata fetching, and automatic SVG screenshot generation
+ * Provides parsing, metadata fetching, and automatic Base64 SVG screenshot generation
  * for project proofs without needing external screenshot services.
  */
 
@@ -19,27 +19,41 @@ export interface GitHubRepoInfo {
 }
 
 /**
- * Extracts owner and repo name from various GitHub URL shapes
+ * Robust extractor for owner and repo name from various GitHub URL shapes:
+ * - https://github.com/owner/repo
+ * - https://github.com/owner/repo/tree/main
+ * - https://github.com/owner/repo/blob/main/README.md
+ * - owner/repo
+ * - https://github.com/owner (defaults to primary kernel repo)
  */
 export function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
   if (!url) return null;
-  const cleanUrl = url.trim();
+  const cleanUrl = url.trim().replace(/\/$/, '');
 
-  // Pattern: https://github.com/owner/repo or github.com/owner/repo or owner/repo
-  const httpsMatch = cleanUrl.match(/github\.com\/([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)/i);
-  if (httpsMatch) {
+  // 1. Standard repo URL with optional subpath: https://github.com/owner/repo/...
+  const fullMatch = cleanUrl.match(/github\.com\/([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)/i);
+  if (fullMatch) {
     return {
-      owner: httpsMatch[1],
-      repo: httpsMatch[2].replace(/\.git$/i, '').replace(/\/$/, '')
+      owner: fullMatch[1],
+      repo: fullMatch[2].replace(/\.git$/i, '')
     };
   }
 
-  // Short form: owner/repo
+  // 2. Short form: owner/repo
   const shortMatch = cleanUrl.match(/^([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)$/);
   if (shortMatch && !cleanUrl.includes('://')) {
     return {
       owner: shortMatch[1],
       repo: shortMatch[2].replace(/\.git$/i, '')
+    };
+  }
+
+  // 3. User profile only: https://github.com/owner -> fallback to default kernel repository
+  const profileMatch = cleanUrl.match(/github\.com\/([a-zA-Z0-9_.-]+)$/i);
+  if (profileMatch) {
+    return {
+      owner: profileMatch[1],
+      repo: 'xiaomi_sm8150_kernel_e404_modified'
     };
   }
 
@@ -89,7 +103,28 @@ export function extractReadmeSummary(markdown: string): { title: string; summary
 }
 
 /**
- * Generates an aesthetic, crisp 16:9 SVG Data URI that acts as an authentic
+ * Convert SVG string to universal Base64 data URI supported by all browsers
+ */
+export function svgToBase64DataUrl(svgString: string): string {
+  if (typeof window !== 'undefined') {
+    try {
+      const encoded = btoa(unescape(encodeURIComponent(svgString)));
+      return `data:image/svg+xml;base64,${encoded}`;
+    } catch {
+      return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`;
+    }
+  } else {
+    try {
+      const buffer = Buffer.from(svgString, 'utf-8');
+      return `data:image/svg+xml;base64,${buffer.toString('base64')}`;
+    } catch {
+      return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`;
+    }
+  }
+}
+
+/**
+ * Generates an aesthetic, crisp 16:9 Base64 SVG Data URI that acts as an authentic
  * GitHub README code-window screenshot for the project card.
  */
 export function generateReadmeScreenshotSvg(data: {
@@ -121,8 +156,16 @@ export function generateReadmeScreenshotSvg(data: {
   const safeOwner = escapeXml(owner);
   const safeRepo = escapeXml(repo);
 
+  const dynamicLines = readmeLines.length > 0
+    ? readmeLines.slice(0, 3)
+    : [
+        '# Verified Kernel: Qualcomm Snapdragon 860 (sm8150)',
+        '# Integrated Features: ReSukiSU + SuSFS Stealth Mount + eBPF',
+        '# Recovery Support: TWRP and OrangeFox Flashable Zip'
+      ];
+
   // SVG representation formatted as a modern developer HUD / GitHub code window
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675">
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675" preserveAspectRatio="xMidYMid meet">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#020617"/>
@@ -201,15 +244,14 @@ export function generateReadmeScreenshotSvg(data: {
     <g transform="translate(0, 180)">
       <rect x="0" y="0" width="1000" height="240" rx="10" fill="#050914" stroke="#1e293b" stroke-width="1"/>
       <line x1="0" y1="32" x2="1000" y2="32" stroke="#1e293b" stroke-width="1"/>
-      <text x="16" y="21" fill="#64748b" font-family="monospace" font-size="11">TERMINAL // KERNEL COMPILATION & SETUP</text>
+      <text x="16" y="21" fill="#64748b" font-family="monospace" font-size="11">TERMINAL // KERNEL COMPILATION &amp; SETUP</text>
 
       <!-- Terminal Lines -->
       <text x="20" y="65" fill="#10b981" font-family="monospace" font-size="13">$ git clone https://github.com/${safeOwner}/${safeRepo}.git</text>
       <text x="20" y="95" fill="#38bdf8" font-family="monospace" font-size="13">$ export ARCH=arm64 &amp;&amp; export SUBARCH=arm64</text>
       <text x="20" y="125" fill="#cbd5e1" font-family="monospace" font-size="13"># Target: Qualcomm Snapdragon 860 (sm8150 / vayu / bhima)</text>
-      <text x="20" y="155" fill="#cbd5e1" font-family="monospace" font-size="13"># Verified Features: ReSukiSU + SuSFS Stealth Mount + eBPF</text>
-      ${readmeLines.slice(0, 2).map((line, idx) => `
-      <text x="20" y="${185 + idx * 28}" fill="#94a3b8" font-family="monospace" font-size="12">${escapeXml(line)}</text>
+      ${dynamicLines.map((line, idx) => `
+      <text x="20" y="${155 + idx * 28}" fill="#94a3b8" font-family="monospace" font-size="12">${escapeXml(line)}</text>
       `).join('')}
     </g>
   </g>
@@ -218,11 +260,11 @@ export function generateReadmeScreenshotSvg(data: {
   <text x="1115" y="610" text-anchor="end" fill="#334155" font-family="monospace" font-size="11" letter-spacing="1">POCO X3 PRO // 0xFAKFEKRILL EMBEDDED ENGINE</text>
 </svg>`;
 
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  return svgToBase64DataUrl(svg);
 }
 
 function escapeXml(unsafe: string): string {
-  return unsafe
+  return (unsafe || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')

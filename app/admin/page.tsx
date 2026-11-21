@@ -26,7 +26,7 @@ import {
 import { usePortfolioData } from '@/lib/portfolioStore';
 import { sha256, DEFAULT_ADMIN_HASH, validateAndReadImageFile, sanitizeString } from '@/lib/security';
 import { CertificateItem, ProjectProofItem } from '@/lib/types';
-import { parseGitHubUrl } from '@/lib/githubReadme';
+import { parseGitHubUrl, generateReadmeScreenshotSvg } from '@/lib/githubReadme';
 
 const AUTH_STORAGE_KEY = 'dalu_admin_session';
 const PASSKEY_HASH_KEY = 'dalu_admin_passkey_hash';
@@ -368,54 +368,116 @@ export default function AdminPage() {
     }
 
     setFetchingGithub(true);
+
+    // 1. Generate guaranteed immediate snapshot so the preview ALWAYS appears instantly
+    const initialTitle =
+      projectForm.title.trim() !== ''
+        ? projectForm.title
+        : parsed.repo.replace(/[-_]/g, ' ').toUpperCase();
+
+    const initialDesc =
+      projectForm.description.trim() !== ''
+        ? projectForm.description
+        : `Repository GitHub ${parsed.owner}/${parsed.repo} untuk modul pengembangan kernel POCO X3 Pro.`;
+
+    const immediateSvg = generateReadmeScreenshotSvg({
+      owner: parsed.owner,
+      repo: parsed.repo,
+      title: initialTitle,
+      description: initialDesc,
+      tags: ['POCO X3 Pro', 'sm8150', 'vayu']
+    });
+
+    setProjectImagePreview(immediateSvg);
+    setProjectForm((prev) => ({
+      ...prev,
+      title: initialTitle,
+      description: initialDesc,
+      image: immediateSvg,
+      githubRepo: `${parsed.owner}/${parsed.repo}`
+    }));
+
     try {
+      // 2. Try fetching from /api/github-readme
       const res = await fetch(`/api/github-readme?url=${encodeURIComponent(projectForm.proofUrl)}`);
-      const json = await res.json();
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          const repoData = json.data;
 
-      if (res.ok && json.success) {
-        const repoData = json.data;
+          if (repoData.screenshotSvg) {
+            setProjectImagePreview(repoData.screenshotSvg);
+          }
 
-        // 1. Set generated SVG screenshot as project image preview
-        setProjectImagePreview(repoData.screenshotSvg);
+          const newTitle =
+            projectForm.title.trim() === ''
+              ? repoData.repo.replace(/[-_]/g, ' ').toUpperCase()
+              : projectForm.title;
 
-        // 2. Autofill title if empty
-        const newTitle =
-          projectForm.title.trim() === ''
-            ? repoData.repo.replace(/[-_]/g, ' ').toUpperCase()
-            : projectForm.title;
+          const newDesc =
+            projectForm.description.trim() === ''
+              ? repoData.description || initialDesc
+              : projectForm.description;
 
-        // 3. Autofill description if empty
-        const newDesc =
-          projectForm.description.trim() === ''
-            ? repoData.description || `Repository GitHub ${repoData.fullName} untuk pengembangan kernel dan sistem POCO X3 Pro.`
-            : projectForm.description;
+          const existingTags = tagsInput
+            .split(',')
+            .map((t) => t.trim())
+            .filter(Boolean);
+          const combinedTags = Array.from(
+            new Set([...existingTags, repoData.language, ...(repoData.topics || []), 'POCO X3 Pro', 'sm8150'])
+          ).filter(Boolean);
 
-        // 4. Autofill tags
-        const existingTags = tagsInput
-          .split(',')
-          .map((t) => t.trim())
-          .filter(Boolean);
-        const combinedTags = Array.from(
-          new Set([...existingTags, repoData.language, ...(repoData.topics || []), 'POCO X3 Pro', 'sm8150'])
-        ).filter(Boolean);
+          setTagsInput(combinedTags.join(', '));
 
-        setTagsInput(combinedTags.join(', '));
+          setProjectForm((prev) => ({
+            ...prev,
+            title: newTitle,
+            description: newDesc,
+            image: repoData.screenshotSvg || immediateSvg,
+            githubRepo: repoData.fullName,
+            readmeContent: repoData.readme || ''
+          }));
 
-        setProjectForm((prev) => ({
-          ...prev,
-          title: newTitle,
-          description: newDesc,
-          image: repoData.screenshotSvg,
-          githubRepo: repoData.fullName,
-          readmeContent: repoData.readme || ''
-        }));
-
-        showToast(`Berhasil generate screenshot README untuk ${repoData.fullName}!`);
-      } else {
-        alert(json.error || 'Gagal mengambil data README dari repositori GitHub.');
+          showToast(`Berhasil generate screenshot README untuk ${repoData.fullName}!`);
+          return;
+        }
       }
+
+      // 3. Fallback: Direct client-side fetch from raw GitHub if API endpoint was rate-limited
+      try {
+        for (const branch of ['main', 'master']) {
+          const rawRes = await fetch(
+            `https://raw.githubusercontent.com/${parsed.owner}/${parsed.repo}/${branch}/README.md`
+          );
+          if (rawRes.ok) {
+            const rawText = await rawRes.text();
+            const enrichedSvg = generateReadmeScreenshotSvg({
+              owner: parsed.owner,
+              repo: parsed.repo,
+              title: initialTitle,
+              description: initialDesc,
+              readme: rawText,
+              tags: ['POCO X3 Pro', 'sm8150', 'vayu']
+            });
+
+            setProjectImagePreview(enrichedSvg);
+            setProjectForm((prev) => ({
+              ...prev,
+              image: enrichedSvg,
+              readmeContent: rawText
+            }));
+            showToast(`Berhasil menarik README langsung dari raw GitHub!`);
+            return;
+          }
+        }
+      } catch {
+        // Fallback to immediateSvg which is already loaded
+      }
+
+      showToast(`Screenshot README dibuat dari ${parsed.owner}/${parsed.repo}!`);
     } catch {
-      alert('Koneksi ke GitHub gagal. Pastikan URL benar dan web terhubung ke internet.');
+      // Even if fetch threw an error, immediateSvg is already displayed and set
+      showToast(`Screenshot README siap digunakan untuk ${parsed.owner}/${parsed.repo}!`);
     } finally {
       setFetchingGithub(false);
     }
@@ -1216,7 +1278,7 @@ export default function AdminPage() {
                   )}
                 </div>
 
-                {projectImagePreview && (
+                {projectImagePreview ? (
                   <div className="mt-3 relative max-w-sm aspect-video rounded-xl overflow-hidden border border-slate-800 bg-black shadow-lg">
                     <img
                       src={projectImagePreview}
@@ -1228,6 +1290,10 @@ export default function AdminPage() {
                         ⚡ Auto-Snapshot GitHub README
                       </span>
                     )}
+                  </div>
+                ) : (
+                  <div className="mt-3 p-4 rounded-xl border border-dashed border-slate-800 bg-slate-950/50 text-xs font-mono text-slate-500 flex items-center justify-center">
+                    Belum ada screenshot bukti yang dipilih atau di-generate.
                   </div>
                 )}
               </div>
