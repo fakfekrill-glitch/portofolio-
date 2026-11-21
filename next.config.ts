@@ -1,18 +1,70 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Menyembunyikan "X-Powered-By: Next.js" dari response headers
+  // Sembunyikan header internal Next.js
   poweredByHeader: false,
-  
-  // Mengaktifkan security headers lapis pertama
+
+  // Konfigurasi domain gambar eksternal yang diizinkan (Discord CDN, Spotify, dll)
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'cdn.discordapp.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'media.discordapp.net',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.scdn.co',
+      },
+    ],
+  },
+
+  // Security Headers Berlapis (Anti Cyber Attack, Anti-Clickjacking, Anti-XSS, CSP)
   async headers() {
     return [
       {
         source: '/(.*)',
         headers: [
-          { key: 'X-Frame-Options', value: 'DENY' }, // Mencegah Clickjacking
-          { key: 'X-Content-Type-Options', value: 'nosniff' }, // Mencegah MIME-Sniffing
-          { key: 'X-XSS-Protection', value: '1; mode=block' }, // Anti-XSS dasar
-          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' }, // Wajib HTTPS
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
+          },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob: https://cdn.discordapp.com https://media.discordapp.net https://i.scdn.co https://cdn-icons-png.flaticon.com https://*.lanyard.rest",
+              "font-src 'self' data:",
+              "connect-src 'self' https://api.lanyard.rest wss://api.lanyard.rest https://dns.google https://api.ipify.org https://open.spotify.com",
+              "frame-ancestors 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join('; '),
+          },
         ],
       },
     ];
