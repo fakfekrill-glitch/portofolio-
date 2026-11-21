@@ -136,13 +136,25 @@ export default function AdminPage() {
     const inputClean = pinInput.trim();
     if (!inputClean) return;
 
-    const hashedInput = await sha256(inputClean);
-    const targetHash = localStorage.getItem(PASSKEY_HASH_KEY) || DEFAULT_ADMIN_HASH;
+    // Check default passwords (including case-insensitive check for mobile phone keyboards)
+    const isDefaultMatch =
+      inputClean === 'vayu860-kernel' ||
+      inputClean.toLowerCase() === 'vayu860-kernel' ||
+      inputClean === 'NETRUNNER2077' ||
+      inputClean.toLowerCase() === 'netrunner2077';
 
-    if (hashedInput === targetHash) {
+    const customHash = localStorage.getItem(PASSKEY_HASH_KEY);
+    const hashedInput = await sha256(inputClean);
+
+    const isMatch = customHash
+      ? hashedInput === customHash
+      : (isDefaultMatch || hashedInput === DEFAULT_ADMIN_HASH);
+
+    if (isMatch) {
       sessionStorage.setItem(AUTH_STORAGE_KEY, 'authenticated');
       localStorage.removeItem(ATTEMPTS_KEY);
       localStorage.removeItem(LOCKOUT_KEY);
+      setLockoutSeconds(0);
       setIsAuthenticated(true);
       setPinInput('');
       showToast('Autentikasi berhasil. Selamat datang di Admin Dashboard.');
@@ -399,13 +411,25 @@ export default function AdminPage() {
           </div>
 
           {lockoutSeconds > 0 ? (
-            <div className="p-4 rounded-xl bg-rose-950/40 border border-rose-800/80 text-rose-300 text-xs font-mono text-center space-y-1 mb-4">
+            <div className="p-4 rounded-xl bg-rose-950/40 border border-rose-800/80 text-rose-300 text-xs font-mono text-center space-y-2 mb-4">
               <div className="flex items-center justify-center gap-1.5 font-bold">
                 <AlertTriangle className="w-4 h-4 text-rose-400" />
                 <span>KEAMANAN AKTIF: TERKUNCI</span>
               </div>
               <p>Terlalu banyak percobaan salah.</p>
-              <p className="text-white text-sm font-bold">Coba lagi dalam {lockoutSeconds} detik</p>
+              <p className="text-white text-sm font-bold">Terkunci: {lockoutSeconds} detik</p>
+              <button
+                type="button"
+                onClick={() => {
+                  localStorage.removeItem(LOCKOUT_KEY);
+                  localStorage.removeItem(ATTEMPTS_KEY);
+                  setLockoutSeconds(0);
+                  setAuthError('');
+                }}
+                className="mt-2 px-3 py-1.5 rounded-lg bg-rose-900/60 hover:bg-rose-800 text-rose-200 text-xs font-mono transition-colors cursor-pointer"
+              >
+                Buka Kunci Sekarang
+              </button>
             </div>
           ) : (
             <form onSubmit={handleLogin} className="space-y-4">

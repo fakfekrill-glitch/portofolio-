@@ -21,8 +21,8 @@ export async function sha256(message: string): Promise<string> {
 
 // Default hashed passkey for admin dashboard
 // Default plaintext: "vayu860-kernel"
-// SHA-256 of "vayu860-kernel":
-export const DEFAULT_ADMIN_HASH = "80f1e7a02796dc227918f4a13eebfd32ec9ee229509dfba5c73d9e03d09a8966";
+// Real SHA-256 of "vayu860-kernel":
+export const DEFAULT_ADMIN_HASH = "ac3ff3bb5bb1c053c224c3aa8eb8f10d5b9c00ff9c3cfd5e0be90e4a9dd8682b";
 
 // Sanitize user inputs to prevent XSS / script injection
 export function sanitizeString(input: string, maxLen = 1000): string {
