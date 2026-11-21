@@ -474,9 +474,6 @@ export default function AdminPage() {
           )}
 
           <div className="mt-6 pt-4 border-t border-slate-800 text-center">
-            <p className="text-[11px] font-mono text-slate-500 mb-3">
-              Default passphrase: <span className="text-emerald-400">vayu860-kernel</span>
-            </p>
             <Link
               href="/"
               className="inline-flex items-center gap-1.5 text-xs font-mono text-slate-400 hover:text-slate-200 transition-colors"
@@ -535,10 +532,10 @@ export default function AdminPage() {
             </Link>
             <button
               onClick={handleLogout}
-              className="px-3 py-1.5 rounded-lg text-xs font-mono bg-rose-950/60 hover:bg-rose-900 border border-rose-800/80 text-rose-300 transition-colors flex items-center gap-1.5"
+              className="px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold bg-rose-600 hover:bg-rose-500 text-white transition-colors flex items-center gap-1.5 shadow-md cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
-              <span>Keluar</span>
+              <span>Logout</span>
             </button>
           </div>
         </div>
@@ -1327,6 +1324,29 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+
+        {/* Bottom Bar with Logout Button */}
+        <div className="mt-12 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-slate-400">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span>Sesi Admin Aktif • POCO X3 Pro</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 transition-colors"
+            >
+              ← Kembali ke Web
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-md"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Logout dari Admin</span>
+            </button>
+          </div>
+        </div>
       </main>
     </div>
   );
