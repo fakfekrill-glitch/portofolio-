@@ -39,6 +39,8 @@ export interface ProjectProofItem {
   image: string; // URL path or base64 data URL
   tags: string[];
   proofUrl?: string;
+  githubRepo?: string; // e.g. "owner/repo"
+  readmeContent?: string; // Optional embedded README markdown
 }
 
 export interface ArsenalSkill {

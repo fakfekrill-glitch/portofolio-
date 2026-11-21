@@ -20,11 +20,13 @@ import {
   RotateCcw,
   Eye,
   EyeOff,
-  Layers
+  Layers,
+  Zap
 } from 'lucide-react';
 import { usePortfolioData } from '@/lib/portfolioStore';
 import { sha256, DEFAULT_ADMIN_HASH, validateAndReadImageFile, sanitizeString } from '@/lib/security';
 import { CertificateItem, ProjectProofItem } from '@/lib/types';
+import { parseGitHubUrl } from '@/lib/githubReadme';
 
 const AUTH_STORAGE_KEY = 'dalu_admin_session';
 const PASSKEY_HASH_KEY = 'dalu_admin_passkey_hash';
@@ -97,6 +99,7 @@ export default function AdminPage() {
   const [tagsInput, setTagsInput] = useState('POCO X3 Pro, sm8150, Kernel');
   const [projectImagePreview, setProjectImagePreview] = useState<string>('');
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [fetchingGithub, setFetchingGithub] = useState<boolean>(false);
 
   // Passkey change form
   const [newPasskey, setNewPasskey] = useState('');
@@ -342,11 +345,80 @@ export default function AdminPage() {
       description: proj.description,
       image: proj.image,
       tags: proj.tags,
-      proofUrl: proj.proofUrl || ''
+      proofUrl: proj.proofUrl || '',
+      githubRepo: proj.githubRepo || '',
+      readmeContent: proj.readmeContent || ''
     });
     setTagsInput(proj.tags.join(', '));
     setProjectImagePreview(proj.image);
     window.scrollTo({ top: 300, behavior: 'smooth' });
+  };
+
+  // Auto-Fetch & Generate Screenshot from GitHub README
+  const handleFetchGitHubReadme = async () => {
+    if (!projectForm.proofUrl) {
+      alert('Masukkan link repository GitHub terlebih dahulu pada kolom Tautan Repository!');
+      return;
+    }
+
+    const parsed = parseGitHubUrl(projectForm.proofUrl);
+    if (!parsed) {
+      alert('Format link GitHub tidak dikenali. Contoh: https://github.com/fakfekrill-glitch/portofolio-');
+      return;
+    }
+
+    setFetchingGithub(true);
+    try {
+      const res = await fetch(`/api/github-readme?url=${encodeURIComponent(projectForm.proofUrl)}`);
+      const json = await res.json();
+
+      if (res.ok && json.success) {
+        const repoData = json.data;
+
+        // 1. Set generated SVG screenshot as project image preview
+        setProjectImagePreview(repoData.screenshotSvg);
+
+        // 2. Autofill title if empty
+        const newTitle =
+          projectForm.title.trim() === ''
+            ? repoData.repo.replace(/[-_]/g, ' ').toUpperCase()
+            : projectForm.title;
+
+        // 3. Autofill description if empty
+        const newDesc =
+          projectForm.description.trim() === ''
+            ? repoData.description || `Repository GitHub ${repoData.fullName} untuk pengembangan kernel dan sistem POCO X3 Pro.`
+            : projectForm.description;
+
+        // 4. Autofill tags
+        const existingTags = tagsInput
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean);
+        const combinedTags = Array.from(
+          new Set([...existingTags, repoData.language, ...(repoData.topics || []), 'POCO X3 Pro', 'sm8150'])
+        ).filter(Boolean);
+
+        setTagsInput(combinedTags.join(', '));
+
+        setProjectForm((prev) => ({
+          ...prev,
+          title: newTitle,
+          description: newDesc,
+          image: repoData.screenshotSvg,
+          githubRepo: repoData.fullName,
+          readmeContent: repoData.readme || ''
+        }));
+
+        showToast(`Berhasil generate screenshot README untuk ${repoData.fullName}!`);
+      } else {
+        alert(json.error || 'Gagal mengambil data README dari repositori GitHub.');
+      }
+    } catch {
+      alert('Koneksi ke GitHub gagal. Pastikan URL benar dan web terhubung ke internet.');
+    } finally {
+      setFetchingGithub(false);
+    }
   };
 
   // Change Admin Passkey
@@ -1042,7 +1114,7 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-mono text-slate-400 mb-1">Versi / Tag Build</label>
                   <input
@@ -1064,16 +1136,34 @@ export default function AdminPage() {
                     className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 font-mono"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-mono text-slate-400 mb-1">Tautan Repository / Rilis</label>
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono text-slate-400 mb-1">
+                  Tautan Repository GitHub / Rilis Project
+                </label>
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="url"
                     value={projectForm.proofUrl || ''}
                     onChange={(e) => setProjectForm({ ...projectForm, proofUrl: e.target.value })}
-                    placeholder="https://github.com/..."
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 font-mono"
+                    placeholder="https://github.com/fakfekrill-glitch/..."
+                    className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 font-mono"
                   />
+                  <button
+                    type="button"
+                    onClick={handleFetchGitHubReadme}
+                    disabled={fetchingGithub}
+                    className="px-4 py-2.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-400 text-xs font-mono font-bold flex items-center justify-center gap-1.5 shrink-0 transition-colors disabled:opacity-50 cursor-pointer min-h-[42px]"
+                    title="Tarik README & Otomatis Buat Screenshot Code Window dari GitHub"
+                  >
+                    <Zap className={`w-3.5 h-3.5 ${fetchingGithub ? 'animate-spin text-cyan-400' : 'text-emerald-400'}`} />
+                    <span>{fetchingGithub ? 'Menarik Data & Snapshot...' : 'Auto-Generate Screenshot README'}</span>
+                  </button>
                 </div>
+                <p className="text-[11px] font-mono text-slate-500 mt-1">
+                  ⚡ <strong>Auto-Snapshot</strong>: Masukkan link GitHub repo, lalu klik tombol di atas untuk otomatis generate screenshot card dari README & autofill info proyek.
+                </p>
               </div>
 
               <div>
@@ -1127,12 +1217,17 @@ export default function AdminPage() {
                 </div>
 
                 {projectImagePreview && (
-                  <div className="mt-3 relative w-56 aspect-video rounded-lg overflow-hidden border border-slate-800 bg-black">
+                  <div className="mt-3 relative max-w-sm aspect-video rounded-xl overflow-hidden border border-slate-800 bg-black shadow-lg">
                     <img
                       src={projectImagePreview}
                       alt="Pratinjau Bukti"
                       className="w-full h-full object-cover"
                     />
+                    {projectImagePreview.startsWith('data:image/svg+xml') && (
+                      <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded text-[10px] font-mono bg-slate-950/90 text-emerald-400 border border-emerald-500/30 backdrop-blur-sm">
+                        ⚡ Auto-Snapshot GitHub README
+                      </span>
+                    )}
                   </div>
                 )}
               </div>

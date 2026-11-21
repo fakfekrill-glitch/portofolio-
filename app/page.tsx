@@ -52,13 +52,24 @@ export default function HomePage() {
 
   // Lightbox Modal state
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalData, setModalData] = useState({
+  const [modalData, setModalData] = useState<{
+    imageSrc: string;
+    title: string;
+    subtitle?: string;
+    description?: string;
+    tags?: string[];
+    proofUrl?: string;
+    readmeContent?: string;
+    githubRepo?: string;
+  }>({
     imageSrc: '',
     title: '',
     subtitle: '',
     description: '',
-    tags: [] as string[],
-    proofUrl: ''
+    tags: [],
+    proofUrl: '',
+    readmeContent: '',
+    githubRepo: ''
   });
 
   // Contact Form state
@@ -122,7 +133,9 @@ export default function HomePage() {
       subtitle: `${proj.category} • ${proj.version} • ${proj.date}`,
       description: proj.description,
       tags: proj.tags,
-      proofUrl: proj.proofUrl || ''
+      proofUrl: proj.proofUrl || '',
+      readmeContent: proj.readmeContent || '',
+      githubRepo: proj.githubRepo || ''
     });
     setModalOpen(true);
   };
@@ -198,6 +211,8 @@ export default function HomePage() {
         description={modalData.description}
         tags={modalData.tags}
         proofUrl={modalData.proofUrl}
+        readmeContent={modalData.readmeContent}
+        githubRepo={modalData.githubRepo}
       />
 
       {/* Main Foreground Content */}
@@ -526,6 +541,13 @@ export default function HomePage() {
                     <div className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-mono bg-slate-950/80 text-slate-300 border border-slate-800">
                       {project.version}
                     </div>
+
+                    {(project.proofUrl?.includes('github.com') || project.githubRepo) && (
+                      <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded text-[9px] font-mono bg-slate-950/90 text-slate-300 border border-slate-700/80 flex items-center gap-1 backdrop-blur-sm">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                        <span>GitHub README Embedded</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="p-5">
