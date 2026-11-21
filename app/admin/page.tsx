@@ -26,7 +26,7 @@ import {
 import { usePortfolioData } from '@/lib/portfolioStore';
 import { sha256, DEFAULT_ADMIN_HASH, validateAndReadImageFile, sanitizeString } from '@/lib/security';
 import { CertificateItem, ProjectProofItem } from '@/lib/types';
-import { parseGitHubUrl, generateReadmeScreenshotSvg } from '@/lib/githubReadme';
+import { parseGitHubUrl, generateReadmeScreenshotSvg, extractReadmeSummary } from '@/lib/githubReadme';
 
 const AUTH_STORAGE_KEY = 'dalu_admin_session';
 const PASSKEY_HASH_KEY = 'dalu_admin_passkey_hash';
@@ -369,7 +369,6 @@ export default function AdminPage() {
 
     setFetchingGithub(true);
 
-    // 1. Generate guaranteed immediate snapshot so the preview ALWAYS appears instantly
     const initialTitle =
       projectForm.title.trim() !== ''
         ? projectForm.title
@@ -380,25 +379,8 @@ export default function AdminPage() {
         ? projectForm.description
         : `Repository GitHub ${parsed.owner}/${parsed.repo} untuk modul pengembangan kernel POCO X3 Pro.`;
 
-    const immediateSvg = generateReadmeScreenshotSvg({
-      owner: parsed.owner,
-      repo: parsed.repo,
-      title: initialTitle,
-      description: initialDesc,
-      tags: ['POCO X3 Pro', 'sm8150', 'vayu']
-    });
-
-    setProjectImagePreview(immediateSvg);
-    setProjectForm((prev) => ({
-      ...prev,
-      title: initialTitle,
-      description: initialDesc,
-      image: immediateSvg,
-      githubRepo: `${parsed.owner}/${parsed.repo}`
-    }));
-
     try {
-      // 2. Try fetching from /api/github-readme
+      // 1. Try fetching from /api/github-readme
       const res = await fetch(`/api/github-readme?url=${encodeURIComponent(projectForm.proofUrl)}`);
       if (res.ok) {
         const json = await res.json();
@@ -409,14 +391,16 @@ export default function AdminPage() {
             setProjectImagePreview(repoData.screenshotSvg);
           }
 
+          const { title: readmeTitle, summary: readmeSummary } = extractReadmeSummary(repoData.readme || '');
+
           const newTitle =
             projectForm.title.trim() === ''
-              ? repoData.repo.replace(/[-_]/g, ' ').toUpperCase()
+              ? readmeTitle || repoData.repo.replace(/[-_]/g, ' ').toUpperCase()
               : projectForm.title;
 
           const newDesc =
             projectForm.description.trim() === ''
-              ? repoData.description || initialDesc
+              ? repoData.description || readmeSummary || initialDesc
               : projectForm.description;
 
           const existingTags = tagsInput
@@ -433,29 +417,36 @@ export default function AdminPage() {
             ...prev,
             title: newTitle,
             description: newDesc,
-            image: repoData.screenshotSvg || immediateSvg,
+            image: repoData.screenshotSvg || prev.image,
             githubRepo: repoData.fullName,
             readmeContent: repoData.readme || ''
           }));
 
-          showToast(`Berhasil generate screenshot README untuk ${repoData.fullName}!`);
+          showToast(`Berhasil membuat screenshot README asli untuk ${repoData.fullName}!`);
+          setFetchingGithub(false);
           return;
         }
       }
 
-      // 3. Fallback: Direct client-side fetch from raw GitHub if API endpoint was rate-limited
-      try {
-        for (const branch of ['main', 'master']) {
+      // 2. Fallback: Direct client-side fetch from raw GitHub if API endpoint was slow or rate-limited
+      for (const branch of ['main', 'master', 'HEAD', 'dev', 'develop']) {
+        try {
           const rawRes = await fetch(
             `https://raw.githubusercontent.com/${parsed.owner}/${parsed.repo}/${branch}/README.md`
           );
           if (rawRes.ok) {
             const rawText = await rawRes.text();
+            const { title: readmeTitle, summary: readmeSummary } = extractReadmeSummary(rawText);
+
+            const resolvedTitle = projectForm.title.trim() || readmeTitle || parsed.repo.replace(/[-_]/g, ' ').toUpperCase();
+            const resolvedDesc = projectForm.description.trim() || readmeSummary || initialDesc;
+
             const enrichedSvg = generateReadmeScreenshotSvg({
               owner: parsed.owner,
               repo: parsed.repo,
-              title: initialTitle,
-              description: initialDesc,
+              title: resolvedTitle,
+              description: resolvedDesc,
+              branch,
               readme: rawText,
               tags: ['POCO X3 Pro', 'sm8150', 'vayu']
             });
@@ -463,21 +454,42 @@ export default function AdminPage() {
             setProjectImagePreview(enrichedSvg);
             setProjectForm((prev) => ({
               ...prev,
+              title: resolvedTitle,
+              description: resolvedDesc,
               image: enrichedSvg,
+              githubRepo: `${parsed.owner}/${parsed.repo}`,
               readmeContent: rawText
             }));
-            showToast(`Berhasil menarik README langsung dari raw GitHub!`);
+
+            showToast(`Berhasil menarik README asli langsung dari GitHub (${branch})!`);
+            setFetchingGithub(false);
             return;
           }
+        } catch {
+          continue;
         }
-      } catch {
-        // Fallback to immediateSvg which is already loaded
       }
 
-      showToast(`Screenshot README dibuat dari ${parsed.owner}/${parsed.repo}!`);
+      // 3. Fallback: Generate template screenshot if README could not be fetched
+      const immediateSvg = generateReadmeScreenshotSvg({
+        owner: parsed.owner,
+        repo: parsed.repo,
+        title: initialTitle,
+        description: initialDesc,
+        tags: ['POCO X3 Pro', 'sm8150', 'vayu']
+      });
+
+      setProjectImagePreview(immediateSvg);
+      setProjectForm((prev) => ({
+        ...prev,
+        title: initialTitle,
+        description: initialDesc,
+        image: immediateSvg,
+        githubRepo: `${parsed.owner}/${parsed.repo}`
+      }));
+      showToast('README belum tersedia di branch publik, generated snapshot preview.');
     } catch {
-      // Even if fetch threw an error, immediateSvg is already displayed and set
-      showToast(`Screenshot README siap digunakan untuk ${parsed.owner}/${parsed.repo}!`);
+      showToast('Gagal menarik data GitHub, gunakan upload manual jika diperlukan.');
     } finally {
       setFetchingGithub(false);
     }

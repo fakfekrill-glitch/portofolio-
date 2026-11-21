@@ -57,7 +57,8 @@ export const initialPortfolioData: PortfolioData = {
       description: "Custom kernel berperforma tinggi untuk POCO X3 Pro. Dilengkapi integrasi ReSukiSU native, implementasi SuSFS (Stealth Namespace File System Isolation) untuk melewati deteksi root level aplikasi perbankan, dan eBPF subsystem aktif.",
       image: "/projects/Screenshot_2026-07-15_15-57-23.png",
       tags: ["POCO X3 Pro", "KernelSU", "SuSFS", "eBPF", "SM8150"],
-      proofUrl: "https://github.com/fakfekrill-glitch"
+      proofUrl: "https://github.com/fakfekrill-glitch/xiaomi_sm8150_kernel_e404_modified",
+      githubRepo: "fakfekrill-glitch/xiaomi_sm8150_kernel_e404_modified"
     },
     {
       id: "proj-2",
