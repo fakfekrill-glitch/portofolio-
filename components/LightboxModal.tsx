@@ -267,7 +267,12 @@ export default function LightboxModal({
               </div>
             ) : (
               <div className="flex-1">
-                <MarkdownViewer content={readmeText} repoUrl={repoDirectUrl} />
+                <MarkdownViewer
+                  content={readmeText}
+                  repoUrl={repoDirectUrl}
+                  githubRepo={githubInfo ? `${githubInfo.owner}/${githubInfo.repo}` : undefined}
+                  branch="main"
+                />
               </div>
             )}
           </div>

@@ -181,7 +181,12 @@ export default function ScrollableReadmeWindow({
             <span>Memuat live README dari GitHub...</span>
           </div>
         ) : (
-          <MarkdownViewer content={content} repoUrl={repoDirectUrl} />
+          <MarkdownViewer
+            content={content}
+            repoUrl={repoDirectUrl}
+            githubRepo={`${owner}/${repo}`}
+            branch="main"
+          />
         )}
       </div>
 
