@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 import {
   Cpu,
   ShieldAlert,
@@ -22,6 +23,7 @@ import {
 } from 'lucide-react';
 import DiscordActivity from '@/components/DiscordActivity';
 import LightboxModal from '@/components/LightboxModal';
+import AestheticBanner from '@/components/AestheticBanner';
 import { usePortfolioData } from '@/lib/portfolioStore';
 import { ProjectProofItem, CertificateItem } from '@/lib/types';
 
@@ -171,7 +173,10 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500 selection:text-black">
+    <div className="relative min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500 selection:text-black overflow-x-hidden">
+      {/* Aesthetic Background Banner Layer */}
+      <AestheticBanner />
+
       {/* Lightbox Preview Modal */}
       <LightboxModal
         isOpen={modalOpen}
@@ -184,339 +189,301 @@ export default function HomePage() {
         proofUrl={modalData.proofUrl}
       />
 
-      {/* =======================================================
-          SECTION 1: HERO & PROFILE (Dalu Raziq Hidayatullah)
-          ======================================================= */}
-      <section
-        id="about"
-        className="pt-24 sm:pt-28 md:pt-32 pb-16 sm:pb-20 max-w-7xl mx-auto px-4 sm:px-6"
-      >
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-          {/* Left Column: Profile Card + Discord Activity Directly Below */}
-          <div className="lg:col-span-5 space-y-4">
-            {/* Profile Photo Card */}
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl relative overflow-hidden">
-              <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-800">
-                <Image
-                  src={profile.photoPath}
-                  alt={profile.fullName}
-                  fill
-                  priority
-                  className="object-cover object-top hover:scale-102 transition-transform duration-700"
-                  sizes="(max-width: 768px) 100vw, 40vw"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
-                <div className="absolute bottom-3 left-3 right-3 text-left">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <span className="text-xs font-mono text-emerald-400 font-semibold tracking-wider uppercase">
-                      Active Kernel Developer
-                    </span>
-                  </div>
-                  <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight mt-0.5">
-                    {profile.fullName}
-                  </h2>
-                </div>
-              </div>
-
-              {/* Hardware Spec Strip */}
-              <div className="mt-3 pt-3 border-t border-slate-800 grid grid-cols-2 gap-2 text-xs font-mono text-slate-400">
-                <div>
-                  <span className="text-[10px] text-slate-500 block uppercase">Target Device</span>
-                  <span className="text-slate-200 font-semibold">{profile.device}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-500 block uppercase">SoC Architecture</span>
-                  <span className="text-slate-200 font-semibold">{profile.soc}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* DISCORD ACTIVITY CARD DIRECTLY BELOW PROFILE PHOTO */}
-            <div id="discord-presence">
-              <DiscordActivity discordId={profile.discordId} />
-            </div>
-          </div>
-
-          {/* Right Column: Bio & Technical Narrative */}
-          <div className="lg:col-span-7 space-y-6">
-            {/* Status Pill */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs font-mono text-slate-300">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Surabaya, Indonesia • WIB {wibTime || '20:46'}</span>
-            </div>
-
-            {/* Main Headline */}
-            <div>
-              <p className="font-mono text-xs sm:text-sm text-emerald-400 tracking-wider uppercase font-semibold">
-                {profile.title}
-              </p>
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white mt-2 leading-[1.1]">
-                Rekayasa Kernel & <br className="hidden sm:inline" />
-                <span className="text-emerald-400">Modifikasi Sistem Tingkat Rendah.</span>
-              </h1>
-            </div>
-
-            {/* Bio Paragraph */}
-            <p className="text-sm sm:text-base text-slate-300 leading-relaxed font-sans">
-              {profile.bio}
-            </p>
-
-            {/* Key Technical Highlights Box */}
-            <div className="p-4 sm:p-5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3 font-mono text-xs">
-              <div className="flex items-center gap-2 text-slate-200 font-bold border-b border-slate-800 pb-2">
-                <Terminal className="w-4 h-4 text-emerald-400" />
-                <span>SPESIFIKASI PROYEK & KONTRIBUSI KERNEL</span>
-              </div>
-              <ul className="space-y-2 text-slate-300">
-                <li className="flex items-start gap-2">
-                  <span className="text-emerald-400 mt-0.5">•</span>
-                  <span>
-                    <strong className="text-white">POCO X3 Pro (vayu / bhima):</strong> Kompilasi kernel berbasis Qualcomm Snapdragon 860 (sm8150).
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-emerald-400 mt-0.5">•</span>
-                  <span>
-                    <strong className="text-white">ReSukiSU & SuSFS Integration:</strong> Isolasi filesystem mount stealth untuk proteksi integritas aplikasi dan bypass pendeteksi root.
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-emerald-400 mt-0.5">•</span>
-                  <span>
-                    <strong className="text-white">eBPF Subsystem & Networking:</strong> Implementasi filter socket dan paket logging langsung di kernel space.
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-emerald-400 mt-0.5">•</span>
-                  <span>
-                    <strong className="text-white">AnyKernel3 Packaging:</strong> Distribusi paket flashable untuk recovery TWRP dan OrangeFox.
-                  </span>
-                </li>
-              </ul>
-            </div>
-
-            {/* CTAs */}
-            <div className="flex flex-wrap items-center gap-3 pt-2">
-              <a
-                href="#projects"
-                className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs sm:text-sm font-bold transition-all shadow-lg flex items-center gap-2"
-              >
-                <span>Lihat Bukti Pengerjaan Proyek</span>
-                <ArrowRight className="w-4 h-4" />
-              </a>
-
-              <a
-                href="#contact"
-                className="px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 font-mono text-xs sm:text-sm font-semibold transition-all flex items-center gap-2"
-              >
-                <Mail className="w-4 h-4 text-emerald-400" />
-                <span>Hubungi Saya</span>
-              </a>
-
-              <button
-                type="button"
-                onClick={handleCopyEmail}
-                className="px-4 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 font-mono text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
-                title="Salin alamat email"
-              >
-                {copiedEmail ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                <span>{copiedEmail ? 'Email Disalin!' : profile.email}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* =======================================================
-          SECTION 2: ARSENAL KERNEL & TEKNOLOGI
-          ======================================================= */}
-      <section id="arsenal" className="py-16 sm:py-20 border-t border-slate-850 bg-slate-900/40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <span className="text-xs font-mono uppercase tracking-widest text-emerald-400 font-semibold">
-              {"// ARSENAL KERNEL & LOW-LEVEL"}
-            </span>
-            <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight mt-2">
-              Keahlian & Ekosistem Rekayasa
-            </h2>
-            <p className="text-sm text-slate-400 mt-2">
-              Kompilasi downstream kernel, keamanan tingkat root, optimasi toolchain, serta diagnostik perangkat Qualcomm.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {arsenal.map((item, idx) => {
-              const icons = [Cpu, ShieldAlert, Terminal, Wrench];
-              const IconComponent = icons[idx % icons.length];
-
-              return (
-                <div
-                  key={item.category}
-                  className="bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-emerald-500/40 transition-colors flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mb-4">
-                      <IconComponent className="w-5 h-5" />
-                    </div>
-                    <h3 className="font-bold text-base text-slate-100 font-mono">{item.category}</h3>
-                    <p className="text-xs text-slate-400 mt-2 leading-relaxed font-sans">
-                      {item.description}
-                    </p>
-                  </div>
-
-                  <div className="mt-4 pt-3 border-t border-slate-800/80 flex flex-wrap gap-1.5">
-                    {item.skills.map((skill) => (
-                      <span
-                        key={skill}
-                        className="px-2 py-0.5 text-[11px] font-mono bg-slate-950 text-slate-300 rounded border border-slate-800"
-                      >
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* =======================================================
-          SECTION 3: BUKTI PENGERJAAN PROYEK & DOKUMENTASI
-          ======================================================= */}
-      <section id="projects" className="py-16 sm:py-24 max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 sm:mb-12 border-b border-slate-800 pb-6">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-mono text-emerald-400 uppercase tracking-widest font-semibold">
-              <Camera className="w-4 h-4" />
-              <span>DOKUMENTASI & BUKTI PENGERJAAN ({projects.length})</span>
-            </div>
-            <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight mt-1">
-              Bukti Karya & Patch Kernel
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">
-              Dokumentasi tangkapan layar kompilasi, rilis build zip kernel, modul SuSFS, pstore crash dump, dan verifikasi perangkat POCO X3 Pro.
-            </p>
-          </div>
-
-          <div className="text-xs font-mono text-slate-400">
-            Klik kartu untuk memperbesar & melihat detail
-          </div>
-        </div>
-
-        {/* Category Filters */}
-        <div className="flex flex-wrap gap-2 mb-8">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all cursor-pointer ${
-                selectedCategory === cat
-                  ? 'bg-emerald-600 text-white font-bold shadow'
-                  : 'bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800'
-              }`}
+      {/* Main Foreground Content */}
+      <div className="relative z-10">
+        {/* =======================================================
+            SECTION 1: HERO & PROFILE (Dalu Raziq Hidayatullah)
+            ======================================================= */}
+        <section
+          id="about"
+          className="pt-24 sm:pt-28 md:pt-32 pb-16 sm:pb-20 max-w-7xl mx-auto px-4 sm:px-6"
+        >
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+            {/* Left Column: Profile Card + Discord Activity Directly Below */}
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              className="lg:col-span-5 space-y-4"
             >
-              {cat}
-            </button>
-          ))}
-        </div>
-
-        {/* Projects Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProjects.map((project) => (
-            <div
-              key={project.id}
-              onClick={() => handleOpenProject(project)}
-              className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden hover:border-emerald-500/50 transition-all duration-300 cursor-pointer flex flex-col justify-between group shadow-md hover:shadow-xl hover:-translate-y-1"
-            >
-              <div>
-                {/* Thumbnail with Zoom icon overlay */}
-                <div className="relative aspect-video bg-black/60 overflow-hidden">
-                  <img
-                    src={project.image}
-                    alt={project.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              {/* Profile Photo Card */}
+              <div className="bg-slate-900/90 backdrop-blur-sm border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl relative overflow-hidden">
+                <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-800">
+                  <Image
+                    src={profile.photoPath}
+                    alt={profile.fullName}
+                    fill
+                    priority
+                    className="object-cover object-top hover:scale-102 transition-transform duration-700"
+                    sizes="(max-width: 768px) 100vw, 40vw"
                   />
-                  <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <span className="p-2.5 rounded-full bg-slate-900/80 text-white backdrop-blur-sm">
-                      <ZoomIn className="w-5 h-5 text-emerald-400" />
-                    </span>
-                  </div>
-
-                  {/* Badges */}
-                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-mono bg-slate-950/80 text-emerald-400 border border-emerald-500/30">
-                    {project.category}
-                  </div>
-                  <div className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-mono bg-slate-950/80 text-slate-300 border border-slate-800">
-                    {project.version}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+                  <div className="absolute bottom-3 left-3 right-3 text-left">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="text-xs font-mono text-emerald-400 font-semibold tracking-wider uppercase">
+                        Active Kernel Developer
+                      </span>
+                    </div>
+                    <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight mt-0.5">
+                      {profile.fullName}
+                    </h2>
                   </div>
                 </div>
 
-                <div className="p-5">
-                  <h3 className="font-bold text-base text-slate-100 group-hover:text-emerald-400 transition-colors leading-snug">
-                    {project.title}
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-2 line-clamp-3 leading-relaxed font-sans">
-                    {project.description}
-                  </p>
+                {/* Hardware Spec Strip */}
+                <div className="mt-3 pt-3 border-t border-slate-800 grid grid-cols-2 gap-2 text-xs font-mono text-slate-400">
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase">Target Device</span>
+                    <span className="text-slate-200 font-semibold">{profile.device}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase">SoC Architecture</span>
+                    <span className="text-slate-200 font-semibold">{profile.soc}</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Tags & Actions */}
-              <div className="p-4 border-t border-slate-800/80 bg-slate-950/40 flex items-center justify-between text-xs font-mono">
-                <div className="flex flex-wrap gap-1">
-                  {project.tags.slice(0, 3).map((t) => (
-                    <span
-                      key={t}
-                      className="px-1.5 py-0.5 text-[10px] bg-slate-900 text-slate-400 rounded border border-slate-800"
-                    >
-                      #{t}
-                    </span>
-                  ))}
-                </div>
-                <span className="text-emerald-400 inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-                  <span>Lihat Bukti</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </span>
+              {/* DISCORD ACTIVITY CARD DIRECTLY BELOW PROFILE PHOTO */}
+              <div id="discord-presence">
+                <DiscordActivity discordId={profile.discordId} />
               </div>
+            </motion.div>
+
+            {/* Right Column: Bio & Technical Narrative */}
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
+              className="lg:col-span-7 space-y-6"
+            >
+              {/* Status Pill */}
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/90 border border-slate-800 text-xs font-mono text-slate-300 backdrop-blur-sm">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>Surabaya, Indonesia • WIB {wibTime || '21:30'}</span>
+              </div>
+
+              {/* Main Headline */}
+              <div>
+                <p className="font-mono text-xs sm:text-sm text-emerald-400 tracking-wider uppercase font-semibold">
+                  {profile.title}
+                </p>
+                <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white mt-2 leading-[1.1]">
+                  Rekayasa Kernel & <br className="hidden sm:inline" />
+                  <span className="text-emerald-400">Modifikasi Sistem Tingkat Rendah.</span>
+                </h1>
+              </div>
+
+              {/* Bio Paragraph */}
+              <p className="text-sm sm:text-base text-slate-300 leading-relaxed font-sans">
+                {profile.bio}
+              </p>
+
+              {/* Key Technical Highlights Box */}
+              <div className="p-4 sm:p-5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3 font-mono text-xs backdrop-blur-sm">
+                <div className="flex items-center gap-2 text-slate-200 font-bold border-b border-slate-800 pb-2">
+                  <Terminal className="w-4 h-4 text-emerald-400" />
+                  <span>SPESIFIKASI PROYEK & KONTRIBUSI KERNEL</span>
+                </div>
+                <ul className="space-y-2 text-slate-300">
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 mt-0.5">•</span>
+                    <span>
+                      <strong className="text-white">POCO X3 Pro (vayu / bhima):</strong> Kompilasi kernel berbasis Qualcomm Snapdragon 860 (sm8150).
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 mt-0.5">•</span>
+                    <span>
+                      <strong className="text-white">ReSukiSU & SuSFS Integration:</strong> Isolasi filesystem mount stealth untuk proteksi integritas aplikasi dan bypass pendeteksi root.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 mt-0.5">•</span>
+                    <span>
+                      <strong className="text-white">eBPF Subsystem & Networking:</strong> Implementasi filter socket dan paket logging langsung di kernel space.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 mt-0.5">•</span>
+                    <span>
+                      <strong className="text-white">AnyKernel3 Packaging:</strong> Distribusi paket flashable untuk recovery TWRP dan OrangeFox.
+                    </span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* CTAs with Smooth Tap & Hover Feedback */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+                <motion.a
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  href="#projects"
+                  className="px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs sm:text-sm font-bold transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <span>Lihat Bukti Pengerjaan Proyek</span>
+                  <ArrowRight className="w-4 h-4" />
+                </motion.a>
+
+                <motion.a
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  href="#contact"
+                  className="px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 font-mono text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Mail className="w-4 h-4 text-emerald-400" />
+                  <span>Hubungi Saya</span>
+                </motion.a>
+
+                <motion.button
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  type="button"
+                  onClick={handleCopyEmail}
+                  className="px-4 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 font-mono text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                  title="Salin alamat email"
+                >
+                  {copiedEmail ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                  <span className="truncate">{copiedEmail ? 'Email Disalin!' : profile.email}</span>
+                </motion.button>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* =======================================================
+            SECTION 2: ARSENAL KERNEL & TEKNOLOGI
+            ======================================================= */}
+        <section id="arsenal" className="py-16 sm:py-20 border-t border-slate-850/80 bg-slate-900/40 backdrop-blur-[2px]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="text-center max-w-2xl mx-auto mb-12"
+            >
+              <span className="text-xs font-mono uppercase tracking-widest text-emerald-400 font-semibold">
+                {"// ARSENAL KERNEL & LOW-LEVEL"}
+              </span>
+              <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight mt-2">
+                Keahlian & Ekosistem Rekayasa
+              </h2>
+              <p className="text-sm text-slate-400 mt-2">
+                Kompilasi downstream kernel, keamanan tingkat root, optimasi toolchain, serta diagnostik perangkat Qualcomm.
+              </p>
+            </motion.div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              {arsenal.map((item, idx) => {
+                const icons = [Cpu, ShieldAlert, Terminal, Wrench];
+                const IconComponent = icons[idx % icons.length];
+
+                return (
+                  <motion.div
+                    key={item.category}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.15 }}
+                    transition={{ duration: 0.45, delay: idx * 0.08, ease: [0.16, 1, 0.3, 1] }}
+                    whileHover={{ y: -4 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="bg-slate-900/90 border border-slate-800 rounded-xl p-5 hover:border-emerald-500/40 transition-colors flex flex-col justify-between shadow-sm"
+                  >
+                    <div>
+                      <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mb-4">
+                        <IconComponent className="w-5 h-5" />
+                      </div>
+                      <h3 className="font-bold text-base text-slate-100 font-mono">{item.category}</h3>
+                      <p className="text-xs text-slate-400 mt-2 leading-relaxed font-sans">
+                        {item.description}
+                      </p>
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-slate-800/80 flex flex-wrap gap-1.5">
+                      {item.skills.map((skill) => (
+                        <span
+                          key={skill}
+                          className="px-2 py-0.5 text-[11px] font-mono bg-slate-950 text-slate-300 rounded border border-slate-800"
+                        >
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
-          ))}
-        </div>
-      </section>
+          </div>
+        </section>
 
-      {/* =======================================================
-          SECTION 4: PRESTASI & SERTIFIKAT
-          ======================================================= */}
-      <section id="certificates" className="py-16 sm:py-20 border-t border-slate-850 bg-slate-900/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-12 border-b border-slate-800 pb-6">
+        {/* =======================================================
+            SECTION 3: BUKTI PENGERJAAN PROYEK & DOKUMENTASI
+            ======================================================= */}
+        <section id="projects" className="py-16 sm:py-24 max-w-7xl mx-auto px-4 sm:px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 sm:mb-12 border-b border-slate-800 pb-6"
+          >
             <div>
               <div className="flex items-center gap-2 text-xs font-mono text-emerald-400 uppercase tracking-widest font-semibold">
-                <Award className="w-4 h-4" />
-                <span>PRESTASI & SERTIFIKASI ({certificates.length})</span>
+                <Camera className="w-4 h-4" />
+                <span>DOKUMENTASI & BUKTI PENGERJAAN ({projects.length})</span>
               </div>
               <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight mt-1">
-                Sertifikat Resmi
+                Bukti Karya & Patch Kernel
               </h2>
-              <p className="text-xs sm:text-sm text-slate-400 mt-1">
-                Bukti kompetensi dan sertifikasi uji keahlian di bidang komputasi dan teknologi.
+              <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">
+                Dokumentasi tangkapan layar kompilasi, rilis build zip kernel, modul SuSFS, pstore crash dump, dan verifikasi perangkat POCO X3 Pro.
               </p>
             </div>
+
+            <div className="text-xs font-mono text-slate-400 hidden sm:block">
+              Klik kartu untuk memperbesar & melihat detail
+            </div>
+          </motion.div>
+
+          {/* Category Filters (Mobile Touch & Swipe Optimized) */}
+          <div className="flex overflow-x-auto no-scrollbar gap-2 mb-8 py-1 -mx-4 px-4 sm:mx-0 sm:px-0">
+            {categories.map((cat) => (
+              <motion.button
+                key={cat}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-3.5 py-2 rounded-lg text-xs font-mono transition-all cursor-pointer shrink-0 whitespace-nowrap min-h-[38px] ${
+                  selectedCategory === cat
+                    ? 'bg-emerald-600 text-white font-bold shadow'
+                    : 'bg-slate-900/90 border border-slate-800 text-slate-300 hover:bg-slate-800'
+                }`}
+              >
+                {cat}
+              </motion.button>
+            ))}
           </div>
 
+          {/* Projects Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {certificates.map((cert) => (
-              <div
-                key={cert.id}
-                onClick={() => handleOpenCertificate(cert)}
-                className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden hover:border-emerald-500/50 transition-all duration-300 cursor-pointer flex flex-col justify-between group shadow-md hover:shadow-xl hover:-translate-y-1"
+            {filteredProjects.map((project, idx) => (
+              <motion.div
+                key={project.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.1 }}
+                transition={{ duration: 0.45, delay: idx * 0.05, ease: [0.16, 1, 0.3, 1] }}
+                whileHover={{ y: -4 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => handleOpenProject(project)}
+                className="bg-slate-900/90 backdrop-blur-sm border border-slate-800 rounded-xl overflow-hidden hover:border-emerald-500/50 transition-all duration-300 cursor-pointer flex flex-col justify-between group shadow-md hover:shadow-xl"
               >
                 <div>
-                  <div className="relative aspect-[4/3] bg-black/60 overflow-hidden">
+                  {/* Thumbnail with Zoom icon overlay */}
+                  <div className="relative aspect-video bg-black/60 overflow-hidden">
                     <img
-                      src={cert.image}
-                      alt={cert.title}
+                      src={project.image}
+                      alt={project.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
@@ -524,254 +491,372 @@ export default function HomePage() {
                         <ZoomIn className="w-5 h-5 text-emerald-400" />
                       </span>
                     </div>
+
+                    {/* Badges */}
+                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-mono bg-slate-950/80 text-emerald-400 border border-emerald-500/30">
+                      {project.category}
+                    </div>
                     <div className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-mono bg-slate-950/80 text-slate-300 border border-slate-800">
-                      {cert.date}
+                      {project.version}
                     </div>
                   </div>
 
                   <div className="p-5">
                     <h3 className="font-bold text-base text-slate-100 group-hover:text-emerald-400 transition-colors leading-snug">
-                      {cert.title}
+                      {project.title}
                     </h3>
-                    <p className="text-xs text-slate-400 font-mono mt-1.5">{cert.issuer}</p>
-                    {cert.description && (
-                      <p className="text-xs text-slate-400 mt-2 line-clamp-2 leading-relaxed">
-                        {cert.description}
-                      </p>
-                    )}
+                    <p className="text-xs text-slate-400 mt-2 line-clamp-3 leading-relaxed font-sans">
+                      {project.description}
+                    </p>
                   </div>
                 </div>
 
-                <div className="p-4 border-t border-slate-800/80 bg-slate-950/40 flex items-center justify-between text-xs font-mono text-emerald-400">
-                  <span>Pratinjau Resolusi Penuh</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
+                {/* Tags & Actions */}
+                <div className="p-4 border-t border-slate-800/80 bg-slate-950/40 flex items-center justify-between text-xs font-mono">
+                  <div className="flex flex-wrap gap-1">
+                    {project.tags.slice(0, 3).map((t) => (
+                      <span
+                        key={t}
+                        className="px-1.5 py-0.5 text-[10px] bg-slate-900 text-slate-400 rounded border border-slate-800"
+                      >
+                        #{t}
+                      </span>
+                    ))}
+                  </div>
+                  <span className="text-emerald-400 inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                    <span>Lihat Bukti</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </span>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* =======================================================
-          SECTION 5: KONTAK & EMAIL
-          ======================================================= */}
-      <section id="contact" className="py-16 sm:py-24 max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-          {/* Left Column: Direct Info & Social Cards */}
-          <div className="lg:col-span-5 space-y-6">
+        {/* =======================================================
+            SECTION 4: PRESTASI & SERTIFIKAT
+            ======================================================= */}
+        <section id="certificates" className="py-16 sm:py-20 border-t border-slate-850/80 bg-slate-900/30 backdrop-blur-[2px]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.15 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-12 border-b border-slate-800 pb-6"
+            >
+              <div>
+                <div className="flex items-center gap-2 text-xs font-mono text-emerald-400 uppercase tracking-widest font-semibold">
+                  <Award className="w-4 h-4" />
+                  <span>PRESTASI & SERTIFIKASI ({certificates.length})</span>
+                </div>
+                <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight mt-1">
+                  Sertifikat Resmi
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                  Bukti kompetensi dan sertifikasi uji keahlian di bidang komputasi dan teknologi.
+                </p>
+              </div>
+            </motion.div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {certificates.map((cert, idx) => (
+                <motion.div
+                  key={cert.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.1 }}
+                  transition={{ duration: 0.45, delay: idx * 0.05, ease: [0.16, 1, 0.3, 1] }}
+                  whileHover={{ y: -4 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => handleOpenCertificate(cert)}
+                  className="bg-slate-900/90 backdrop-blur-sm border border-slate-800 rounded-xl overflow-hidden hover:border-emerald-500/50 transition-all duration-300 cursor-pointer flex flex-col justify-between group shadow-md hover:shadow-xl"
+                >
+                  <div>
+                    <div className="relative aspect-[4/3] bg-black/60 overflow-hidden">
+                      <img
+                        src={cert.image}
+                        alt={cert.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                        <span className="p-2.5 rounded-full bg-slate-900/80 text-white backdrop-blur-sm">
+                          <ZoomIn className="w-5 h-5 text-emerald-400" />
+                        </span>
+                      </div>
+                      <div className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-mono bg-slate-950/80 text-slate-300 border border-slate-800">
+                        {cert.date}
+                      </div>
+                    </div>
+
+                    <div className="p-5">
+                      <h3 className="font-bold text-base text-slate-100 group-hover:text-emerald-400 transition-colors leading-snug">
+                        {cert.title}
+                      </h3>
+                      <p className="text-xs text-slate-400 font-mono mt-1.5">{cert.issuer}</p>
+                      {cert.description && (
+                        <p className="text-xs text-slate-400 mt-2 line-clamp-2 leading-relaxed">
+                          {cert.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="p-4 border-t border-slate-800/80 bg-slate-950/40 flex items-center justify-between text-xs font-mono text-emerald-400">
+                    <span>Pratinjau Resolusi Penuh</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* =======================================================
+            SECTION 5: KONTAK & EMAIL
+            ======================================================= */}
+        <section id="contact" className="py-16 sm:py-24 max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+            {/* Left Column: Direct Info & Social Cards */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.15 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="lg:col-span-5 space-y-6"
+            >
+              <div>
+                <span className="text-xs font-mono uppercase tracking-widest text-emerald-400 font-semibold">
+                  {"// TERHUBUNG DENGAN SAYA"}
+                </span>
+                <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight mt-2">
+                  Kontak Langsung
+                </h2>
+                <p className="text-sm text-slate-400 mt-2 leading-relaxed">
+                  Ingin berdiskusi seputar custom kernel POCO X3 Pro (vayu/bhima), pengujian patch SuSFS, atau kolaborasi open source? Silakan hubungi saya melalui jalur resmi berikut.
+                </p>
+              </div>
+
+              {/* Email Card Highlight */}
+              <div className="p-5 rounded-xl bg-slate-900/90 backdrop-blur-sm border border-emerald-500/30 flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <span className="text-[10px] font-mono uppercase text-slate-400 block">
+                    Alamat Email Utama
+                  </span>
+                  <a
+                    href={`mailto:${profile.email}`}
+                    className="font-mono text-sm sm:text-base font-bold text-white hover:text-emerald-400 transition-colors truncate block"
+                  >
+                    {profile.email}
+                  </a>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  type="button"
+                  onClick={handleCopyEmail}
+                  className="px-3 py-2 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 text-xs font-mono flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer min-h-[38px]"
+                >
+                  {copiedEmail ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedEmail ? 'Disalin' : 'Salin'}</span>
+                </motion.button>
+              </div>
+
+              {/* Verified Social Channels */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <motion.a
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  href={`https://github.com/${profile.github}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-3.5 rounded-xl bg-slate-900/90 backdrop-blur-sm border border-slate-800 hover:border-slate-700 transition-colors flex items-center gap-3 group"
+                >
+                  <div className="p-2 rounded-lg bg-slate-800 text-slate-200 group-hover:text-emerald-400">
+                    <CustomGithub size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-mono text-slate-400">GitHub</p>
+                    <p className="text-xs font-mono font-bold text-slate-200 truncate">@{profile.github}</p>
+                  </div>
+                </motion.a>
+
+                <motion.a
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  href={`https://instagram.com/${profile.instagram}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-3.5 rounded-xl bg-slate-900/90 backdrop-blur-sm border border-slate-800 hover:border-slate-700 transition-colors flex items-center gap-3 group"
+                >
+                  <div className="p-2 rounded-lg bg-slate-800 text-slate-200 group-hover:text-pink-400">
+                    <CustomInstagram size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-mono text-slate-400">Instagram</p>
+                    <p className="text-xs font-mono font-bold text-slate-200 truncate">@{profile.instagram}</p>
+                  </div>
+                </motion.a>
+
+                <motion.a
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  href={profile.facebookUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-3.5 rounded-xl bg-slate-900/90 backdrop-blur-sm border border-slate-800 hover:border-slate-700 transition-colors flex items-center gap-3 group"
+                >
+                  <div className="p-2 rounded-lg bg-slate-800 text-slate-200 group-hover:text-blue-400">
+                    <CustomFacebook size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-mono text-slate-400">Facebook</p>
+                    <p className="text-xs font-mono font-bold text-slate-200 truncate">{profile.facebook}</p>
+                  </div>
+                </motion.a>
+
+                <motion.a
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  href={profile.steamUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-3.5 rounded-xl bg-slate-900/90 backdrop-blur-sm border border-slate-800 hover:border-slate-700 transition-colors flex items-center gap-3 group"
+                >
+                  <div className="p-2 rounded-lg bg-slate-800 text-slate-200 group-hover:text-cyan-400">
+                    <CustomSteam size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-mono text-slate-400">Steam Community</p>
+                    <p className="text-xs font-mono font-bold text-slate-200 truncate">Sagiri</p>
+                  </div>
+                </motion.a>
+              </div>
+            </motion.div>
+
+            {/* Right Column: Secure Form */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.15 }}
+              transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+              className="lg:col-span-7 bg-slate-900/90 backdrop-blur-sm border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl"
+            >
+              <h3 className="font-mono text-base font-bold text-white mb-2">
+                Kirim Pesan Langsung
+              </h3>
+              <p className="text-xs text-slate-400 font-sans mb-6">
+                Pesan terproteksi enkripsi SSL dan firewall rate-limiting, langsung diteruskan ke inbox saya.
+              </p>
+
+              <form onSubmit={handleSendMessage} className="space-y-4">
+                {/* Honeypot field (hidden from real users, traps automated bots) */}
+                <div style={{ display: 'none' }} aria-hidden="true">
+                  <input
+                    type="text"
+                    name="trap_website"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={formState.trap_website}
+                    onChange={(e) => setFormState({ ...formState, trap_website: e.target.value })}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-mono text-slate-400 mb-1">Nama Lengkap</label>
+                    <input
+                      type="text"
+                      required
+                      value={formState.name}
+                      onChange={(e) => setFormState({ ...formState, name: e.target.value })}
+                      placeholder="Nama Anda"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2.5 text-base sm:text-sm text-slate-100 focus:outline-none focus:border-emerald-500 font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-mono text-slate-400 mb-1">Alamat Email</label>
+                    <input
+                      type="email"
+                      required
+                      value={formState.email}
+                      onChange={(e) => setFormState({ ...formState, email: e.target.value })}
+                      placeholder="email@example.com"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2.5 text-base sm:text-sm text-slate-100 focus:outline-none focus:border-emerald-500 font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono text-slate-400 mb-1">Isi Pesan</label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={formState.message}
+                    onChange={(e) => setFormState({ ...formState, message: e.target.value })}
+                    placeholder="Tuliskan pesan, pertanyaan kernel, atau tawaran kolaborasi..."
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3.5 text-base sm:text-sm text-slate-100 focus:outline-none focus:border-emerald-500 font-sans resize-none"
+                  />
+                </div>
+
+                {sendSuccess && (
+                  <div className="p-3.5 rounded-lg bg-emerald-950/40 border border-emerald-800 text-emerald-300 text-xs font-mono flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                    <span>Pesan Anda berhasil dikirim! Terima kasih telah menghubungi Dalu Raziq.</span>
+                  </div>
+                )}
+
+                {sendError && (
+                  <div className="p-3.5 rounded-lg bg-rose-950/40 border border-rose-800 text-rose-300 text-xs font-mono">
+                    {sendError}
+                  </div>
+                )}
+
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
+                  type="submit"
+                  disabled={sending}
+                  className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-mono text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer min-h-[46px]"
+                >
+                  {sending ? (
+                    <span>Mengirim pesan...</span>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      <span>Kirim Pesan Sekarang</span>
+                    </>
+                  )}
+                </motion.button>
+              </form>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* =======================================================
+            FOOTER
+            ======================================================= */}
+        <footer className="border-t border-slate-850 py-10 bg-slate-950/90 backdrop-blur-sm text-xs font-mono text-slate-500">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>
-              <span className="text-xs font-mono uppercase tracking-widest text-emerald-400 font-semibold">
-                {"// TERHUBUNG DENGAN SAYA"}
-              </span>
-              <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight mt-2">
-                Kontak Langsung
-              </h2>
-              <p className="text-sm text-slate-400 mt-2 leading-relaxed">
-                Ingin berdiskusi seputar custom kernel POCO X3 Pro (vayu/bhima), pengujian patch SuSFS, atau kolaborasi open source? Silakan hubungi saya melalui jalur resmi berikut.
+              <span className="text-slate-300 font-bold">{profile.fullName}</span> • POCO X3 Pro Kernel Developer
+              <p className="text-[11px] text-slate-600 mt-0.5">
+                Qualcomm Snapdragon 860 (vayu / bhima) • Surabaya, Indonesia
               </p>
             </div>
 
-            {/* Email Card Highlight */}
-            <div className="p-5 rounded-xl bg-slate-900 border border-emerald-500/30 flex items-center justify-between gap-4">
-              <div className="min-w-0">
-                <span className="text-[10px] font-mono uppercase text-slate-400 block">
-                  Alamat Email Utama
-                </span>
-                <a
-                  href={`mailto:${profile.email}`}
-                  className="font-mono text-sm sm:text-base font-bold text-white hover:text-emerald-400 transition-colors truncate block"
-                >
-                  {profile.email}
-                </a>
-              </div>
-              <button
-                type="button"
-                onClick={handleCopyEmail}
-                className="px-3 py-2 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 text-xs font-mono flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
-              >
-                {copiedEmail ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedEmail ? 'Disalin' : 'Salin'}</span>
-              </button>
-            </div>
-
-            {/* Verified Social Channels */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <a
-                href={`https://github.com/${profile.github}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors flex items-center gap-3 group"
-              >
-                <div className="p-2 rounded-lg bg-slate-800 text-slate-200 group-hover:text-emerald-400">
-                  <CustomGithub size={18} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] font-mono text-slate-400">GitHub</p>
-                  <p className="text-xs font-mono font-bold text-slate-200 truncate">@{profile.github}</p>
-                </div>
-              </a>
-
-              <a
-                href={`https://instagram.com/${profile.instagram}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors flex items-center gap-3 group"
-              >
-                <div className="p-2 rounded-lg bg-slate-800 text-slate-200 group-hover:text-pink-400">
-                  <CustomInstagram size={18} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] font-mono text-slate-400">Instagram</p>
-                  <p className="text-xs font-mono font-bold text-slate-200 truncate">@{profile.instagram}</p>
-                </div>
-              </a>
-
-              <a
-                href={profile.facebookUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors flex items-center gap-3 group"
-              >
-                <div className="p-2 rounded-lg bg-slate-800 text-slate-200 group-hover:text-blue-400">
-                  <CustomFacebook size={18} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] font-mono text-slate-400">Facebook</p>
-                  <p className="text-xs font-mono font-bold text-slate-200 truncate">{profile.facebook}</p>
-                </div>
-              </a>
-
-              <a
-                href={profile.steamUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors flex items-center gap-3 group"
-              >
-                <div className="p-2 rounded-lg bg-slate-800 text-slate-200 group-hover:text-cyan-400">
-                  <CustomSteam size={18} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] font-mono text-slate-400">Steam Community</p>
-                  <p className="text-xs font-mono font-bold text-slate-200 truncate">Sagiri</p>
-                </div>
+            <div className="flex items-center gap-4 text-slate-400">
+              <a href="#about" className="hover:text-emerald-400 transition-colors">Tentang</a>
+              <a href="#projects" className="hover:text-emerald-400 transition-colors">Proyek</a>
+              <a href="#certificates" className="hover:text-emerald-400 transition-colors">Sertifikat</a>
+              <a href="/admin" className="text-emerald-400 hover:underline flex items-center gap-1 font-semibold">
+                <Lock className="w-3 h-3" />
+                <span>Admin Deck</span>
               </a>
             </div>
           </div>
-
-          {/* Right Column: Secure Form */}
-          <div className="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl">
-            <h3 className="font-mono text-base font-bold text-white mb-2">
-              Kirim Pesan Langsung
-            </h3>
-            <p className="text-xs text-slate-400 font-sans mb-6">
-              Pesan terproteksi enkripsi SSL dan firewall rate-limiting, langsung diteruskan ke inbox saya.
-            </p>
-
-            <form onSubmit={handleSendMessage} className="space-y-4">
-              {/* Honeypot field (hidden from real users, traps automated bots) */}
-              <div style={{ display: 'none' }} aria-hidden="true">
-                <input
-                  type="text"
-                  name="trap_website"
-                  tabIndex={-1}
-                  autoComplete="off"
-                  value={formState.trap_website}
-                  onChange={(e) => setFormState({ ...formState, trap_website: e.target.value })}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-mono text-slate-400 mb-1">Nama Lengkap</label>
-                  <input
-                    type="text"
-                    required
-                    value={formState.name}
-                    onChange={(e) => setFormState({ ...formState, name: e.target.value })}
-                    placeholder="Nama Anda"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-mono text-slate-400 mb-1">Alamat Email</label>
-                  <input
-                    type="email"
-                    required
-                    value={formState.email}
-                    onChange={(e) => setFormState({ ...formState, email: e.target.value })}
-                    placeholder="email@example.com"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 font-mono"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-mono text-slate-400 mb-1">Isi Pesan</label>
-                <textarea
-                  required
-                  rows={4}
-                  value={formState.message}
-                  onChange={(e) => setFormState({ ...formState, message: e.target.value })}
-                  placeholder="Tuliskan pesan, pertanyaan kernel, atau tawaran kolaborasi..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3.5 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 font-sans resize-none"
-                />
-              </div>
-
-              {sendSuccess && (
-                <div className="p-3.5 rounded-lg bg-emerald-950/40 border border-emerald-800 text-emerald-300 text-xs font-mono flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
-                  <span>Pesan Anda berhasil dikirim! Terima kasih telah menghubungi Dalu Raziq.</span>
-                </div>
-              )}
-
-              {sendError && (
-                <div className="p-3.5 rounded-lg bg-rose-950/40 border border-rose-800 text-rose-300 text-xs font-mono">
-                  {sendError}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={sending}
-                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-mono text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer"
-              >
-                {sending ? (
-                  <span>Mengirim pesan...</span>
-                ) : (
-                  <>
-                    <Send className="w-4 h-4" />
-                    <span>Kirim Pesan Sekarang</span>
-                  </>
-                )}
-              </button>
-            </form>
-          </div>
-        </div>
-      </section>
-
-      {/* =======================================================
-          FOOTER
-          ======================================================= */}
-      <footer className="border-t border-slate-850 py-10 bg-slate-950 text-xs font-mono text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            <span className="text-slate-300 font-bold">{profile.fullName}</span> • POCO X3 Pro Kernel Developer
-            <p className="text-[11px] text-slate-600 mt-0.5">
-              Qualcomm Snapdragon 860 (vayu / bhima) • Surabaya, Indonesia
-            </p>
-          </div>
-
-          <div className="flex items-center gap-4 text-slate-400">
-            <a href="#about" className="hover:text-emerald-400 transition-colors">Tentang</a>
-            <a href="#projects" className="hover:text-emerald-400 transition-colors">Proyek</a>
-            <a href="#certificates" className="hover:text-emerald-400 transition-colors">Sertifikat</a>
-            <a href="/admin" className="text-emerald-400 hover:underline flex items-center gap-1 font-semibold">
-              <Lock className="w-3 h-3" />
-              <span>Admin Deck</span>
-            </a>
-          </div>
-        </div>
-      </footer>
+        </footer>
+      </div>
     </div>
   );
 }
