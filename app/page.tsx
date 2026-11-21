@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import { motion } from 'framer-motion';
 import {
   Cpu,
@@ -128,6 +127,18 @@ export default function HomePage() {
     setModalOpen(true);
   };
 
+  const handleOpenProfilePhoto = () => {
+    setModalData({
+      imageSrc: profile.photoPath,
+      title: profile.fullName,
+      subtitle: `${profile.title} • ${profile.device}`,
+      description: `${profile.bio} — Spesialis Kompilasi Linux Kernel Qualcomm Snapdragon 860 (sm8150).`,
+      tags: ['Foto Profil', profile.device, profile.soc],
+      proofUrl: ''
+    });
+    setModalOpen(true);
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (sending) return;
@@ -206,28 +217,44 @@ export default function HomePage() {
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
               className="lg:col-span-5 space-y-4"
             >
-              {/* Profile Photo Card */}
+              {/* Profile Photo Card (Uncropped Full Resolution) */}
               <div className="bg-slate-900/90 backdrop-blur-sm border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl relative overflow-hidden">
-                <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-800">
-                  <Image
+                <div
+                  onClick={handleOpenProfilePhoto}
+                  className="relative w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center cursor-pointer group"
+                  title="Klik untuk melihat foto resolusi penuh"
+                >
+                  <img
                     src={profile.photoPath}
                     alt={profile.fullName}
-                    fill
-                    priority
-                    className="object-cover object-top hover:scale-102 transition-transform duration-700"
-                    sizes="(max-width: 768px) 100vw, 40vw"
+                    className="w-full h-auto max-h-[620px] object-contain rounded-xl group-hover:scale-[1.01] transition-transform duration-300"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
-                  <div className="absolute bottom-3 left-3 right-3 text-left">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                      <span className="text-xs font-mono text-emerald-400 font-semibold tracking-wider uppercase">
-                        Active Kernel Developer
-                      </span>
+                  {/* Subtle inspection badge on hover */}
+                  <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/25 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none">
+                    <span className="px-3 py-1.5 rounded-full bg-slate-900/90 text-white backdrop-blur-sm border border-slate-700 shadow-lg flex items-center gap-1.5 text-xs font-mono">
+                      <ZoomIn className="w-4 h-4 text-emerald-400" />
+                      <span>Resolusi Penuh</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Profile Identity Details (Placed clearly below photo, zero obstruction) */}
+                <div className="mt-3.5 pt-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="text-xs font-mono text-emerald-400 font-semibold tracking-wider uppercase">
+                          Active Kernel Developer
+                        </span>
+                      </div>
+                      <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight mt-0.5">
+                        {profile.fullName}
+                      </h2>
                     </div>
-                    <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight mt-0.5">
-                      {profile.fullName}
-                    </h2>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-950 text-emerald-400 border border-emerald-500/30 shrink-0">
+                      {profile.device}
+                    </span>
                   </div>
                 </div>
 

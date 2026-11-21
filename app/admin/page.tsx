@@ -706,11 +706,11 @@ export default function AdminPage() {
                   Upload Foto Profil Web
                 </label>
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-slate-700 bg-slate-950 shrink-0">
+                  <div className="w-20 h-20 rounded-xl overflow-hidden border border-slate-700 bg-slate-950 shrink-0 flex items-center justify-center p-1">
                     <img
                       src={avatarPreview}
                       alt="Avatar Preview"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain rounded-lg"
                     />
                   </div>
                   <div className="flex-1">

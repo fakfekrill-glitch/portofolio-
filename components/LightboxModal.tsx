@@ -73,7 +73,7 @@ export default function LightboxModal({
           <img
             src={imageSrc}
             alt={title}
-            className="max-h-[60vh] max-w-full object-contain rounded-lg shadow-md"
+            className="max-h-[68vh] max-w-full object-contain rounded-lg shadow-md"
           />
         </div>
 
